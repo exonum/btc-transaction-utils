@@ -1,0 +1,26 @@
+# vim files
+*.swp
+# macos files
+*.DS_Store
+
+# cargo
+target
+*/target
+*.rs.bk
+Cargo.lock
+
+# IDE files
+.idea
+.vscode
+*.iml
+
+# Python files
+__pycache__/
+*.py[cod]
+*$py.class
+# other
+*.orig
+.python-version
+
+# Docker
+# docker/images
