@@ -1,5 +1,4 @@
 use std::fmt;
-use std::ops::Deref;
 use std::str::FromStr;
 
 use bitcoin::blockdata::opcodes::All;
@@ -16,14 +15,6 @@ impl fmt::Display for RedeemScript {
     }
 }
 
-impl Deref for RedeemScript {
-    type Target = Script;
-
-    fn deref(&self) -> &Script {
-        &self.0
-    }
-}
-
 impl FromStr for RedeemScript {
     type Err = hex::FromHexError;
 
@@ -36,6 +27,12 @@ impl FromStr for RedeemScript {
 impl From<&'static str> for RedeemScript {
     fn from(s: &'static str) -> RedeemScript {
         RedeemScript::from_str(s).unwrap()
+    }
+}
+
+impl From<RedeemScript> for Script {
+    fn from(s: RedeemScript) -> Script {
+        s.0
     }
 }
 
@@ -171,7 +168,6 @@ mod tests {
             .to_script()
             .unwrap();
         let string = script.to_string();
-        println!("{:?}", script);
         let script2 = RedeemScript::from_str(&string).unwrap();
         assert_eq!(script, script2);
     }
