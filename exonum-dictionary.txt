@@ -3,8 +3,8 @@ aricent
 atomicity
 backend
 bigint
-bitbucket
 Bitbucket
+bitbucket
 bitcoind
 bitcoinrpc
 bitfury
@@ -95,8 +95,8 @@ pubkey
 pubkeys
 readonly
 reddit
-regtest
 Regtest
+regtest
 reimplemented
 repo
 repos
@@ -115,10 +115,12 @@ rustup
 satoshis
 secp
 seedable
+segwit
 serde
 serializable
 serialize
 serializer
+shwpkh
 shwsh
 Sighash
 signum
@@ -146,8 +148,10 @@ timestamps
 tlsdate
 toml
 toolchain
+txdata
 txhex
 txid
+txin
 txindex
 txvec
 tymethod
@@ -167,4 +171,5 @@ webhook
 webhooks
 Webhooks
 whitelisted
+wpkh
 writeln
