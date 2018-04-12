@@ -74,6 +74,7 @@ Merkle
 millis
 mkdir
 mpsc
+multisig
 mutex
 nanos
 nodelay
@@ -118,6 +119,8 @@ serde
 serializable
 serialize
 serializer
+shwsh
+Sighash
 signum
 socketaddr
 sodiumoxide

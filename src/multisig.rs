@@ -7,7 +7,13 @@ use hex;
 use secp256k1::PublicKey;
 
 #[derive(Debug, PartialEq)]
-pub struct RedeemScript(Script);
+pub struct RedeemScript(pub(crate) Script);
+
+impl RedeemScript {
+    fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
+        Ok(RedeemScript(script))
+    }
+}
 
 impl fmt::Display for RedeemScript {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -19,8 +25,9 @@ impl FromStr for RedeemScript {
     type Err = hex::FromHexError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let inner = Script::from(hex::decode(s)?);
-        Ok(RedeemScript(inner))
+        let script = Script::from(hex::decode(s)?);
+        // TODO check redeem_script structure
+        Ok(RedeemScript::from_script(script).unwrap())
     }
 }
 
@@ -109,17 +116,8 @@ pub enum RedeemScriptError {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use rand;
-    use secp256k1;
-    use super::{RedeemScript, RedeemScriptBuilder, RedeemScriptError};
-
-    fn secp_gen_keypair() -> (::secp256k1::PublicKey, ::secp256k1::SecretKey) {
-        let mut rng = rand::thread_rng();
-        let context = secp256k1::Secp256k1::new();
-        let sk = secp256k1::SecretKey::new(&context, &mut rng);
-        let pk = secp256k1::PublicKey::from_secret_key(&context, &sk).unwrap();
-        (pk, sk)
-    }
+    use multisig::{RedeemScript, RedeemScriptBuilder, RedeemScriptError};
+    use test_data::secp_gen_keypair;
 
     #[test]
     fn test_redeem_script_builder_no_quorum() {
