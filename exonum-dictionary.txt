@@ -3,8 +3,8 @@ aricent
 atomicity
 backend
 bigint
-Bitbucket
 bitbucket
+Bitbucket
 bitcoind
 bitcoinrpc
 bitfury
@@ -93,6 +93,7 @@ prevotes
 println
 pubkey
 pubkeys
+PUSHBYTES
 readonly
 reddit
 Regtest

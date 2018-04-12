@@ -5,6 +5,9 @@ extern crate failure;
 #[macro_use]
 extern crate failure_derive;
 extern crate hex;
+#[cfg(test)]
+#[macro_use]
+extern crate pretty_assertions;
 extern crate rand;
 extern crate secp256k1;
 
