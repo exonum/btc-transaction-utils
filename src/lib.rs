@@ -14,6 +14,7 @@ extern crate secp256k1;
 #[macro_use]
 mod macros;
 pub mod p2wsh;
+pub mod p2wpk;
 pub mod multisig;
 pub mod test_data;
 
