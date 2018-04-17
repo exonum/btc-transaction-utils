@@ -20,6 +20,7 @@ pub mod test_data;
 
 use bitcoin::blockdata::transaction::{Transaction, TxIn};
 
+#[derive(Debug, Copy, Clone)]
 pub struct TxInRef<'a> {
     transaction: &'a Transaction,
     index: usize,

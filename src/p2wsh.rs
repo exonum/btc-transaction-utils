@@ -7,54 +7,62 @@ use secp256k1::{self, Message, Secp256k1, SecretKey};
 use multisig::RedeemScript;
 use TxInRef;
 
+pub struct InputSigner {
+    context: Secp256k1,
+    script: RedeemScript,
+}
+
+impl InputSigner {
+    pub fn new(script: RedeemScript) -> InputSigner {
+        InputSigner {
+            context: Secp256k1::new(),
+            script,
+        }
+    }
+
+    pub fn sign_input<'a>(
+        &mut self,
+        txin: TxInRef<'a>,
+        value: u64,
+        secret_key: &SecretKey,
+    ) -> Result<Vec<u8>, secp256k1::Error> {
+        let tx = txin.transaction();
+        let idx = txin.index();
+        // compute sighash
+        let sighash = SighashComponents::new(tx).sighash_all(tx, idx, &self.script.0, value);
+        // Make signature
+        let msg = Message::from_slice(&sighash[..])?;
+        let mut signature = self.context
+            .sign(&msg, secret_key)?
+            .serialize_der(&self.context);
+        signature.push(SigHashType::All as u8);
+        Ok(signature)
+    }
+
+    pub fn witness_data<I: IntoIterator<Item = Vec<u8>>>(&self, signatures: I) -> Vec<Vec<u8>> {
+        let mut witness_stack = vec![Vec::default()];
+        witness_stack.extend(signatures);
+        witness_stack.push(self.script.0.clone().into_vec());
+        witness_stack
+    }
+}
+
 pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
     Address::p2wsh(&redeem_script.0, network)
 }
 
-pub fn sign_input<'a>(
-    context: &mut Secp256k1,
-    witness_script: &RedeemScript,
-    txin: TxInRef<'a>,
-    value: u64,
-    secret_key: &SecretKey,
-) -> Result<Vec<u8>, secp256k1::Error> {
-    // compute sighash
-    let sighash = SighashComponents::new(txin.transaction()).sighash_all(
-        txin.transaction(),
-        txin.index(),
-        &witness_script.0,
-        value,
-    );
-    // Make signature
-    let msg = Message::from_slice(&sighash[..])?;
-    let mut signature = context.sign(&msg, secret_key)?.serialize_der(context);
-    signature.push(SigHashType::All as u8);
-    Ok(signature)
-}
-
-pub fn witness_stack<I: IntoIterator<Item = Vec<u8>>>(
-    redeem_script: &RedeemScript,
-    signatures: I,
-) -> Vec<Vec<u8>> {
-    let mut witness_stack = vec![Vec::default()];
-    witness_stack.extend(signatures);
-    witness_stack.push(redeem_script.0.clone().into_vec());
-    witness_stack
-}
-
 #[cfg(test)]
 mod tests {
-    use bitcoin::blockdata::script::{Builder, Script};
     use bitcoin::blockdata::opcodes::All;
+    use bitcoin::blockdata::script::{Builder, Script};
     use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
     use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
-    use secp256k1::Secp256k1;
 
-    use TxInRef;
     use multisig::RedeemScriptBuilder;
     use p2wsh;
     use test_data::{secp_gen_keypair_with_rng, tx_from_hex};
+    use TxInRef;
 
     #[test]
     fn test_multisig_native_segwit() {
@@ -110,17 +118,13 @@ mod tests {
         };
 
         let witness_stack = {
-            let mut context = Secp256k1::new();
-            let signatures = keypairs[0..quorum].iter().map(|keypair| {
-                p2wsh::sign_input(
-                    &mut context,
-                    &redeem_script,
-                    TxInRef::new(&transaction, 0),
-                    10000,
-                    &keypair.1,
-                ).unwrap()
-            });
-            p2wsh::witness_stack(&redeem_script, signatures)
+            let mut signer = p2wsh::InputSigner::new(redeem_script);
+            let txin = TxInRef::new(&transaction, 0);
+            let signatures = keypairs[0..quorum]
+                .iter()
+                .map(|keypair| signer.sign_input(txin, 10_000, &keypair.1).unwrap())
+                .collect::<Vec<_>>();
+            signer.witness_data(signatures)
         };
         // Signed transaction
         transaction.witness.push(witness_stack);
