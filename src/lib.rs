@@ -10,6 +10,8 @@ extern crate hex;
 extern crate pretty_assertions;
 extern crate rand;
 extern crate secp256k1;
+extern crate serde;
+extern crate serde_str;
 
 #[macro_use]
 mod macros;
@@ -40,7 +42,7 @@ impl<'a> TxInRef<'a> {
         &self.transaction.input[self.index]
     }
 
-    pub(crate) fn index(&self) -> usize {
+    pub fn index(&self) -> usize {
         self.index
     }
 }
