@@ -5,7 +5,7 @@ use bitcoin::util::address::Address;
 use bitcoin::util::bip143::SighashComponents;
 use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey};
 
-use TxInRef;
+use {TxInRef, TxOutValue};
 
 pub struct InputSigner {
     context: Secp256k1,
@@ -22,14 +22,15 @@ impl InputSigner {
         }
     }
 
-    pub fn sign_input<'a>(
+    pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
-        value: u64,
+        value: V,
         secret_key: &SecretKey,
     ) -> Result<Vec<u8>, secp256k1::Error> {
         let tx = txin.transaction();
         let idx = txin.index();
+        let value = value.into().amount(txin);
         // compute sighash
         let sighash =
             SighashComponents::new(tx).sighash_all(tx, idx, &self.witness_script(), value);
@@ -111,7 +112,7 @@ mod tests {
 
         let mut signer = p2wpk::InputSigner::new(pk, Network::Testnet);
         let signature = signer
-            .sign_input(TxInRef::new(&transaction, 0), 10000000, &sk)
+            .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &sk)
             .unwrap();
         let witness_stack = signer.witness_data(signature);
         // Signed transaction

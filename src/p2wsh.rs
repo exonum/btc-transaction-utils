@@ -5,7 +5,7 @@ use bitcoin::util::bip143::SighashComponents;
 use secp256k1::{self, Message, Secp256k1, SecretKey};
 
 use multisig::RedeemScript;
-use TxInRef;
+use {TxInRef, TxOutValue};
 
 pub struct InputSigner {
     context: Secp256k1,
@@ -20,14 +20,15 @@ impl InputSigner {
         }
     }
 
-    pub fn sign_input<'a>(
+    pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
-        value: u64,
+        value: V,
         secret_key: &SecretKey,
     ) -> Result<Vec<u8>, secp256k1::Error> {
         let tx = txin.transaction();
         let idx = txin.index();
+        let value = value.into().amount(txin);
         // compute sighash
         let sighash = SighashComponents::new(tx).sighash_all(tx, idx, &self.script.0, value);
         // Make signature
@@ -122,7 +123,7 @@ mod tests {
             let txin = TxInRef::new(&transaction, 0);
             let signatures = keypairs[0..quorum]
                 .iter()
-                .map(|keypair| signer.sign_input(txin, 10_000, &keypair.1).unwrap())
+                .map(|keypair| signer.sign_input(txin, &prev_tx, &keypair.1).unwrap())
                 .collect::<Vec<_>>();
             signer.witness_data(signatures)
         };
