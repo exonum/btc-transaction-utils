@@ -5,7 +5,7 @@ authors = ["The Exonum Team <exonum@bitfury.com>"]
 readme = "README.md"
 
 [dependencies]
-bitcoin = { version = "0.12.0" }
+bitcoin = { version = "0.13.0" }
 display_derive = "0.0.0"
 failure = "0.1.1"
 failure_derive = "0.1.1"

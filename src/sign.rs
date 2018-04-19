@@ -27,10 +27,8 @@ pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
     txin: TxInRef<'a>,
     value: V,
 ) -> Sha256dHash {
-    let tx = txin.transaction();
-    let idx = txin.index();
     let value = value.into().amount(txin);
-    SighashComponents::new(tx).sighash_all(tx, idx, &script, value)
+    SighashComponents::new(txin.transaction()).sighash_all(txin.as_ref(), &script, value)
 }
 
 pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(

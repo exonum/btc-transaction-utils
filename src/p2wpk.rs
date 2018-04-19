@@ -129,6 +129,7 @@ mod tests {
                     prev_index: 1,
                     script_sig: Script::default(),
                     sequence: 0xFFFFFFFF,
+                    witness: Vec::default(),
                 },
             ],
             output: vec![
@@ -140,7 +141,6 @@ mod tests {
                         .into_script(),
                 },
             ],
-            witness: Vec::default(),
         };
         // Make signature
         let mut signer = p2wpk::InputSigner::new(pk, Network::Testnet);
@@ -157,8 +157,7 @@ mod tests {
             )
             .expect("Signature should be correct");
         // Signed transaction
-        let witness_stack = signer.witness_data(signature);
-        transaction.witness.push(witness_stack);
+        transaction.input[0].witness = signer.witness_data(signature);
         // Check output
         let expected_tx = tx_from_hex(
             "0200000000010145f4a039a4bd6cc753ec02a22498b98427c6c288244340fff9d2abb5c63e48390100000\

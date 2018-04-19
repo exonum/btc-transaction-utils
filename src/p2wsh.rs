@@ -137,6 +137,7 @@ mod tests {
                     prev_index: 1,
                     script_sig: Script::default(),
                     sequence: 0xFFFFFFFF,
+                    witness: Vec::default(),
                 },
             ],
             output: vec![
@@ -148,7 +149,6 @@ mod tests {
                         .into_script(),
                 },
             ],
-            witness: Vec::default(),
         };
 
         let witness_stack = {
@@ -172,7 +172,7 @@ mod tests {
             signer.witness_data(signatures)
         };
         // Signed transaction
-        transaction.witness.push(witness_stack);
+        transaction.input[0].witness = witness_stack;
         // Check output
         assert_eq!(
             transaction,
@@ -220,7 +220,7 @@ mod tests {
         );
         // Verify first signature
         let public_key = redeem_script.info().public_keys[0];
-        let signature = &transaction.witness[0][1];
+        let signature = &transaction.input[0].witness[1];
         let signer = p2wsh::InputSigner::new(redeem_script);
         signer
             .verify_input(

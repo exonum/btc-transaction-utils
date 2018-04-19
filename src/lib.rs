@@ -62,6 +62,12 @@ impl<'a> TxInRef<'a> {
     }
 }
 
+impl<'a> AsRef<TxIn> for TxInRef<'a> {
+    fn as_ref(&self) -> &TxIn {
+        self.input()
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum TxOutValue<'a> {
     Amount(u64),
