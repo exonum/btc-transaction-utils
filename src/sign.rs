@@ -1,3 +1,19 @@
+// Copyright 2018 The Exonum Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//! Helper functions to create and verify segwit input signatures with the sighash all type.
+
 use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::blockdata::script::Script;
 use bitcoin::util::bip143::SighashComponents;
@@ -5,8 +21,6 @@ use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
 
 use {TxInRef, TxOutValue};
-
-// Helper functions to create and verify segwit input signatures with the sighash all type.
 
 pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
     script: &Script,
