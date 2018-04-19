@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin-transactions-builder"
+name = "btc-transaction-utils"
 version = "0.0.0"
 authors = ["The Exonum Team <exonum@bitfury.com>"]
 readme = "README.md"
