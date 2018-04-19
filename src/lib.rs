@@ -15,6 +15,7 @@ extern crate serde_str;
 
 #[macro_use]
 mod macros;
+mod sign;
 pub mod p2wsh;
 pub mod p2wpk;
 pub mod multisig;

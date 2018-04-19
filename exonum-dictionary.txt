@@ -94,6 +94,7 @@ println
 pubkey
 pubkeys
 PUSHBYTES
+PUSHNUM
 readonly
 reddit
 Regtest

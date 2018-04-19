@@ -2,12 +2,12 @@ use std::fmt;
 use std::str::FromStr;
 
 use bitcoin::blockdata::opcodes::{All, Class};
-use bitcoin::blockdata::script::{Builder, Instruction, Script};
+use bitcoin::blockdata::script::{read_uint, Builder, Instruction, Script};
 use failure;
 use hex;
 use secp256k1::{PublicKey, Secp256k1};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RedeemScript(pub(crate) Script);
 
 impl RedeemScript {
@@ -78,14 +78,19 @@ impl RedeemScriptLayout {
         script: &Script,
     ) -> Result<RedeemScriptLayout, RedeemScriptError> {
         fn read_usize<'a>(instruction: Instruction<'a>) -> Option<usize> {
-            if let Instruction::Op(op) = instruction {
-                if let Class::PushNum(num) = op.classify() {
-                    Some(num as usize)
-                } else {
-                    None
+            match instruction {
+                Instruction::Op(op) => {
+                    if let Class::PushNum(num) = op.classify() {
+                        Some(num as usize)
+                    } else {
+                        None
+                    }
                 }
-            } else {
-                None
+                Instruction::PushBytes(data) => {
+                    let num = read_uint(data, data.len()).ok()?;
+                    Some(num as usize)
+                }
+                _ => None,
             }
         };
 
@@ -99,6 +104,13 @@ impl RedeemScriptLayout {
             // Parse public keys
             let mut public_keys = Vec::new();
             while let Some(Instruction::PushBytes(slice)) = instructions.peek().cloned() {
+                // HACK
+                // `public_keys_len` can be pushed as `OP_PUSHNUM` or as `OP_PUSHBYTES`
+                // but its length cannot be greater than 1.
+                if slice.len() == 1 {
+                    break;
+                }
+                // Extract public key from slice
                 let pub_key = PublicKey::from_slice(context, slice)
                     .map_err(|_| RedeemScriptError::NotStandard)?;
                 public_keys.push(pub_key);
@@ -230,12 +242,33 @@ mod tests {
     }
 
     #[test]
-    fn test_redeem_script_from_hex_standard() {
+    fn test_redeem_script_from_hex_standard_short() {
         RedeemScript::from(
             "5321027db7837e51888e94c094703030d162c682c8dba312210f44ff440fbd5e5c24732102bdd272891c9\
              e4dfc3962b1fdffd5a59732019816f9db4833634dbdaf01a401a52103280883dc31ccaee34218819aaa24\
              5480c35a33acd91283586ff6d1284ed681e52103e2bc790a6e32bf5a766919ff55b1f9e9914e13aed84f5\
              02c0e4171976e19deb054ae",
+        );
+    }
+
+    #[test]
+    fn test_redeem_script_from_hex_standard_long() {
+        RedeemScript::from(
+            "5c21031cf96b4fef362af7d86ee6c7159fa89485730dac8e3090163dd0c282dbc84f2221028839757bba9\
+             bdf46ae553c124479e5c3ded609495f3e93e88ab23c0f559e8be521035c70ffb21d1b454ec650e511e76f6\
+             bd3fe76f49c471522ee187abac8d0131a18210234acd7dee22bc23688beed0c7e42c0930cfe024204b7298\
+             b0b59d0e76a46476521033897e8dd88ee04cb42b69838c3167471880da23944c10eb9f67de2b5ca32a9d12\
+             1027a715cf0aeec55482c1d42bfeb75c8f54348ec8b0ca0f9b535ed50a739b8ad632103a2be0380e248ec3\
+             6401e99680e0fb4f8c03a0a5e00d5dda107aee6cba77b639521038bdb47da82981776e8b0e5d4175f27930\
+             339a32e77ee7052ec51a1f2f0a46e88210312c4fb516caeb5eaec8ffdeecd4a507b69d6808651ae02a4a61\
+             165cc56bfe55121039e021ca4d7969e5db181e0905b9baab2afe395e84587b588a6b039207c91135521025\
+             9c9f752846c7bd514a042d53ea305f2d4ca7873cb21937dc6b5e82afbb8fb922102c52c3dc6e080ea4e74b\
+             a2e6797548bd79a692a01baeba1c757a18fd0ef519fb42102f5010ab66dd7a8dc06caefeceb9bb7e6e42c5\
+             d4afdab527a2f02d87b758920612103efbcec8bcc6ea4e58b44214b14eae2677399c28df8bb81fcd120cb4\
+             c88ce3bd92103e88aa50f0d7f43cb3171a69675385f130c6abafacadde87fc84d5a194da5ad9c21025ed88\
+             603b59882c3ec6ef43c0b33ac9db315ecca8e7073e60d9b56145fc0efa02103643277862c4a8ab27913e3d\
+             2bcea109b6637c7454a03410aac8ccad445e81a502103380785c3e1c105e366ff445227cdde68e6a6461d6\
+             793a1437db847ecd04129dc0112ae",
         );
     }
 

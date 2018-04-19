@@ -1,12 +1,13 @@
 use bitcoin::blockdata::script::Script;
-use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
-use bitcoin::util::bip143::SighashComponents;
-use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey};
+use bitcoin::util::hash::Sha256dHash;
+use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
 use {TxInRef, TxOutValue};
+use sign;
 
+#[derive(Debug)]
 pub struct InputSigner {
     context: Secp256k1,
     public_key: PublicKey,
@@ -22,25 +23,43 @@ impl InputSigner {
         }
     }
 
+    pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
+        &mut self,
+        txin: TxInRef<'a>,
+        value: V,
+    ) -> Sha256dHash {
+        sign::signature_hash(&self.witness_script(), txin, value)
+    }
+
     pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
         value: V,
         secret_key: &SecretKey,
     ) -> Result<Vec<u8>, secp256k1::Error> {
-        let tx = txin.transaction();
-        let idx = txin.index();
-        let value = value.into().amount(txin);
-        // compute sighash
-        let sighash =
-            SighashComponents::new(tx).sighash_all(tx, idx, &self.witness_script(), value);
-        // Make signature
-        let msg = Message::from_slice(&sighash[..])?;
-        let mut signature = self.context
-            .sign(&msg, secret_key)?
-            .serialize_der(&self.context);
-        signature.push(SigHashType::All as u8);
-        Ok(signature)
+        let script = self.witness_script();
+        sign::sign_input(&mut self.context, &script, txin, value, secret_key)
+    }
+
+    pub fn verify_input<'a, 'b, V, S>(
+        &self,
+        txin: TxInRef<'a>,
+        value: V,
+        public_key: &PublicKey,
+        signature: S,
+    ) -> Result<(), secp256k1::Error>
+    where
+        V: Into<TxOutValue<'b>>,
+        S: AsRef<[u8]>,
+    {
+        sign::verify_input_signature(
+            &self.context,
+            &self.witness_script(),
+            txin,
+            value,
+            public_key,
+            signature.as_ref(),
+        )
     }
 
     pub fn witness_data(&self, signature: Vec<u8>) -> Vec<Vec<u8>> {
@@ -109,13 +128,22 @@ mod tests {
             ],
             witness: Vec::default(),
         };
-
+        // Make signature
         let mut signer = p2wpk::InputSigner::new(pk, Network::Testnet);
         let signature = signer
             .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &sk)
             .unwrap();
-        let witness_stack = signer.witness_data(signature);
+        // Verify signature
+        signer
+            .verify_input(
+                TxInRef::new(&transaction, 0),
+                &prev_tx,
+                &pk,
+                &signature.split_last().unwrap().1,
+            )
+            .expect("Signature should be correct");
         // Signed transaction
+        let witness_stack = signer.witness_data(signature);
         transaction.witness.push(witness_stack);
         // Check output
         let expected_tx = tx_from_hex(
