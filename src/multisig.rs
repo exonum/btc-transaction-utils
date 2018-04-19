@@ -62,6 +62,12 @@ impl From<RedeemScript> for Script {
     }
 }
 
+impl AsRef<Script> for RedeemScript {
+    fn as_ref(&self) -> &Script {
+        &self.0
+    }
+}
+
 impl ::serde::Serialize for RedeemScript {
     fn serialize<S>(&self, ser: S) -> ::std::result::Result<S::Ok, S::Error>
     where
