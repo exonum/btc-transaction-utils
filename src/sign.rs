@@ -22,6 +22,30 @@ use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
 
 use {TxInRef, TxOutValue};
 
+pub struct InputSignature(Vec<u8>);
+
+impl InputSignature {
+    pub fn new(mut inner: Vec<u8>, sighash_type: SigHashType) -> InputSignature {
+        inner.push(sighash_type as u8);
+        InputSignature(inner)
+    }
+
+    pub fn content(&self) -> &[u8] {
+        &self.0.split_last().unwrap().1
+    }
+
+    pub fn sighash_type(&self) -> SigHashType {
+        let byte = *self.0.last().unwrap();
+        SigHashType::from_u32(byte as u32)
+    }
+}
+
+impl From<InputSignature> for Vec<u8> {
+    fn from(s: InputSignature) -> Self {
+        s.0
+    }
+}
+
 pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
     script: &Script,
     txin: TxInRef<'a>,
@@ -37,14 +61,13 @@ pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
     txin: TxInRef<'a>,
     value: V,
     secret_key: &SecretKey,
-) -> Result<Vec<u8>, secp256k1::Error> {
+) -> Result<InputSignature, secp256k1::Error> {
     // compute sighash
     let sighash = signature_hash(script, txin, value);
     // Make signature
     let msg = Message::from_slice(&sighash[..])?;
-    let mut signature = context.sign(&msg, secret_key)?.serialize_der(&context);
-    signature.push(SigHashType::All as u8);
-    Ok(signature)
+    let signature = context.sign(&msg, secret_key)?.serialize_der(&context);
+    Ok(InputSignature::new(signature, SigHashType::All))
 }
 
 pub fn verify_input_signature<'a, 'b, V: Into<TxOutValue<'b>>>(

@@ -18,7 +18,7 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {TxInRef, TxOutValue};
+use {TxInRef, TxOutValue, InputSignature};
 use sign;
 
 #[derive(Debug)]
@@ -50,7 +50,7 @@ impl InputSigner {
         txin: TxInRef<'a>,
         value: V,
         secret_key: &SecretKey,
-    ) -> Result<Vec<u8>, secp256k1::Error> {
+    ) -> Result<InputSignature, secp256k1::Error> {
         let script = self.witness_script();
         sign::sign_input(&mut self.context, &script, txin, value, secret_key)
     }
@@ -153,11 +153,11 @@ mod tests {
                 TxInRef::new(&transaction, 0),
                 &prev_tx,
                 &pk,
-                &signature.split_last().unwrap().1,
+                signature.content(),
             )
             .expect("Signature should be correct");
         // Signed transaction
-        transaction.input[0].witness = signer.witness_data(signature);
+        transaction.input[0].witness = signer.witness_data(signature.into());
         // Check output
         let expected_tx = tx_from_hex(
             "0200000000010145f4a039a4bd6cc753ec02a22498b98427c6c288244340fff9d2abb5c63e48390100000\

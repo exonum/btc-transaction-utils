@@ -36,6 +36,7 @@ pub mod multisig;
 pub mod test_data;
 
 use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
+pub use sign::InputSignature;
 
 #[derive(Debug, Copy, Clone)]
 pub struct TxInRef<'a> {
@@ -76,7 +77,7 @@ pub enum TxOutValue<'a> {
 }
 
 impl<'a> TxOutValue<'a> {
-    fn amount<'b>(self, txin: TxInRef<'b>) -> u64 {
+    fn amount(self, txin: TxInRef) -> u64 {
         match self {
             TxOutValue::Amount(value) => value,
             TxOutValue::PrevTx(prev_tx) => prev_tx.output[txin.input().prev_index as usize].value,

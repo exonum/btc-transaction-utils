@@ -17,7 +17,7 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {TxInRef, TxOutValue};
+use {TxInRef, TxOutValue, InputSignature};
 use multisig::RedeemScript;
 use sign;
 
@@ -48,7 +48,7 @@ impl InputSigner {
         txin: TxInRef<'a>,
         value: V,
         secret_key: &SecretKey,
-    ) -> Result<Vec<u8>, secp256k1::Error> {
+    ) -> Result<InputSignature, secp256k1::Error> {
         sign::sign_input(&mut self.context, &self.script.0, txin, value, secret_key)
     }
 
@@ -163,10 +163,10 @@ mod tests {
                             txin,
                             &prev_tx,
                             &keypair.0,
-                            &signature.split_last().unwrap().1,
+                            signature.content(),
                         )
                         .unwrap();
-                    signature
+                    signature.into()
                 })
                 .collect::<Vec<_>>();
             signer.witness_data(signatures)

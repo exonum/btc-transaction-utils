@@ -97,7 +97,7 @@ impl RedeemScriptLayout {
         context: &Secp256k1,
         script: &Script,
     ) -> Result<RedeemScriptLayout, RedeemScriptError> {
-        fn read_usize<'a>(instruction: Instruction<'a>) -> Option<usize> {
+        fn read_usize(instruction: Instruction) -> Option<usize> {
             match instruction {
                 Instruction::Op(op) => {
                     if let Class::PushNum(num) = op.classify() {
@@ -192,7 +192,7 @@ impl RedeemScriptBuilder {
         self
     }
 
-    pub fn to_script(&mut self) -> Result<RedeemScript, RedeemScriptError> {
+    pub fn to_script(&self) -> Result<RedeemScript, RedeemScriptError> {
         let total_count = self.0.public_keys.len();
         // Check preconditions
         ensure!(self.0.quorum > 0, RedeemScriptError::NoQuorum);
