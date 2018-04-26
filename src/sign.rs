@@ -40,9 +40,40 @@ impl InputSignature {
     }
 }
 
+pub struct InputSignatureRef<'a>(&'a [u8]);
+
+impl<'a> InputSignatureRef<'a> {
+    pub fn from_bytes(bytes: &'a [u8]) -> Option<InputSignatureRef<'a>> {
+        let (_content, _sighash_type) = bytes.split_last()?;
+        // TODO check content length and sighash type
+        Some(InputSignatureRef(bytes))
+    }
+
+    pub fn content(&self) -> &[u8] {
+        &self.0.split_last().unwrap().1
+    }
+
+    pub fn sighash_type(&self) -> SigHashType {
+        let byte = *self.0.last().unwrap();
+        SigHashType::from_u32(byte as u32)
+    }    
+}
+
 impl From<InputSignature> for Vec<u8> {
     fn from(s: InputSignature) -> Self {
         s.0
+    }
+}
+
+impl AsRef<[u8]> for InputSignature {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+impl<'a> From<&'a InputSignature> for InputSignatureRef<'a> {
+    fn from(s: &'a InputSignature) -> InputSignatureRef {
+        InputSignatureRef(s.0.as_ref())
     }
 }
 
@@ -70,18 +101,27 @@ pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
     Ok(InputSignature::new(signature, SigHashType::All))
 }
 
-pub fn verify_input_signature<'a, 'b, V: Into<TxOutValue<'b>>>(
+pub fn verify_input_signature<'a, 'b, V>(
     context: &Secp256k1,
     script: &Script,
     txin: TxInRef<'a>,
     value: V,
     public_key: &PublicKey,
     signature: &[u8],
-) -> Result<(), secp256k1::Error> {
+) -> Result<(), secp256k1::Error> 
+    where V: Into<TxOutValue<'b>>
+{
     // compute sighash
     let sighash = signature_hash(script, txin, value);
     // Verify signature
     let msg = Message::from_slice(&sighash[..])?;
     let sign = Signature::from_der(&context, signature)?;
     context.verify(&msg, &sign, public_key)
+}
+
+#[test]
+fn test_input_signature_ref_correct()
+{
+    let bytes = b"abacaba";
+    InputSignatureRef::from_bytes(bytes).expect("Signature should be correct");
 }

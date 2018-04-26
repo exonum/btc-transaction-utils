@@ -36,7 +36,7 @@ pub mod multisig;
 pub mod test_data;
 
 use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
-pub use sign::InputSignature;
+pub use sign::{InputSignature, InputSignatureRef};
 
 #[derive(Debug, Copy, Clone)]
 pub struct TxInRef<'a> {
