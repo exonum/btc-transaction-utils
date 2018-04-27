@@ -22,6 +22,7 @@ use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
 
 use {TxInRef, TxOutValue};
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct InputSignature(Vec<u8>);
 
 impl InputSignature {
@@ -40,6 +41,7 @@ impl InputSignature {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct InputSignatureRef<'a>(&'a [u8]);
 
 impl<'a> InputSignatureRef<'a> {
