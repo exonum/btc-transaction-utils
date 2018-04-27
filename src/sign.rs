@@ -14,6 +14,8 @@
 
 //! Helper functions to create and verify segwit input signatures with the sighash all type.
 
+use std::borrow::ToOwned;
+
 use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::blockdata::script::Script;
 use bitcoin::util::bip143::SighashComponents;
@@ -58,7 +60,7 @@ impl<'a> InputSignatureRef<'a> {
     pub fn sighash_type(&self) -> SigHashType {
         let byte = *self.0.last().unwrap();
         SigHashType::from_u32(byte as u32)
-    }    
+    }
 }
 
 impl From<InputSignature> for Vec<u8> {
@@ -73,9 +75,21 @@ impl AsRef<[u8]> for InputSignature {
     }
 }
 
+impl<'a> AsRef<[u8]> for InputSignatureRef<'a> {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
 impl<'a> From<&'a InputSignature> for InputSignatureRef<'a> {
     fn from(s: &'a InputSignature) -> InputSignatureRef {
         InputSignatureRef(s.0.as_ref())
+    }
+}
+
+impl<'a> From<InputSignatureRef<'a>> for Vec<u8> {
+    fn from(s: InputSignatureRef<'a>) -> Vec<u8> {
+        s.0.to_owned()
     }
 }
 
