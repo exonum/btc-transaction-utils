@@ -165,8 +165,9 @@ mod tests {
         let signatures = keypairs[0..quorum]
             .iter()
             .map(|keypair| {
+                let txin = TxInRef::new(&transaction, 0);
                 let signature = signer
-                    .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1)
+                    .sign_input(txin, &prev_tx, &keypair.1)
                     .unwrap();
                 signer
                     .verify_input(txin, &prev_tx, &keypair.0, signature.content())
