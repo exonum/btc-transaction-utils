@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! BTC transaction utils is a small library that will help to create multisig addresses
+//! and sign a some types of the segwit transactions.
+
 extern crate bitcoin;
 #[macro_use]
 extern crate display_derive;

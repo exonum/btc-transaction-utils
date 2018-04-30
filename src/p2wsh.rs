@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {TxInRef, TxOutValue, InputSignature};
+use {InputSignature, TxInRef, TxOutValue};
 use multisig::RedeemScript;
 use sign;
 
@@ -71,6 +72,14 @@ impl InputSigner {
             public_key,
             signature.as_ref(),
         )
+    }
+
+    pub fn spend_input<I: IntoIterator<Item = InputSignature>>(
+        &self,
+        input: &mut TxIn,
+        signatures: I,
+    ) {
+        input.witness = self.witness_data(signatures.into_iter().map(Into::into));
     }
 
     pub fn witness_data<I: IntoIterator<Item = Vec<u8>>>(&self, signatures: I) -> Vec<Vec<u8>> {
@@ -151,28 +160,21 @@ mod tests {
             ],
         };
 
-        let witness_stack = {
-            let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
-            let txin = TxInRef::new(&transaction, 0);
-            let signatures = keypairs[0..quorum]
-                .iter()
-                .map(|keypair| {
-                    let signature = signer.sign_input(txin, &prev_tx, &keypair.1).unwrap();
-                    signer
-                        .verify_input(
-                            txin,
-                            &prev_tx,
-                            &keypair.0,
-                            signature.content(),
-                        )
-                        .unwrap();
-                    signature.into()
-                })
-                .collect::<Vec<_>>();
-            signer.witness_data(signatures)
-        };
         // Signed transaction
-        transaction.input[0].witness = witness_stack;
+        let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
+        let signatures = keypairs[0..quorum]
+            .iter()
+            .map(|keypair| {
+                let signature = signer
+                    .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1)
+                    .unwrap();
+                signer
+                    .verify_input(txin, &prev_tx, &keypair.0, signature.content())
+                    .unwrap();
+                signature
+            })
+            .collect::<Vec<_>>();
+        signer.spend_input(&mut transaction.input[0], signatures);
         // Check output
         assert_eq!(
             transaction,

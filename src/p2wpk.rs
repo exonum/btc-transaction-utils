@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use bitcoin::blockdata::script::Script;
+use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
@@ -74,6 +75,11 @@ impl InputSigner {
             public_key,
             signature.as_ref(),
         )
+    }
+
+    pub fn spend_input(&self, input: &mut TxIn, signature: InputSignature)
+    {
+        input.witness = self.witness_data(signature.into());
     }
 
     pub fn witness_data(&self, signature: Vec<u8>) -> Vec<Vec<u8>> {
@@ -157,7 +163,7 @@ mod tests {
             )
             .expect("Signature should be correct");
         // Signed transaction
-        transaction.input[0].witness = signer.witness_data(signature.into());
+        signer.spend_input(&mut transaction.input[0], signature);
         // Check output
         let expected_tx = tx_from_hex(
             "0200000000010145f4a039a4bd6cc753ec02a22498b98427c6c288244340fff9d2abb5c63e48390100000\
