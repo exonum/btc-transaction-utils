@@ -26,12 +26,12 @@ pub struct RedeemScript(pub(crate) Script);
 
 impl RedeemScript {
     pub fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
-        RedeemScriptLayout::parse(&Secp256k1::without_caps(), &script)?;
+        RedeemScriptContent::parse(&Secp256k1::without_caps(), &script)?;
         Ok(RedeemScript(script))
     }
 
-    pub fn info(&self) -> RedeemScriptLayout {
-        RedeemScriptLayout::parse(&Secp256k1::without_caps(), &self.0).unwrap()
+    pub fn info(&self) -> RedeemScriptContent {
+        RedeemScriptContent::parse(&Secp256k1::without_caps(), &self.0).unwrap()
     }
 }
 
@@ -87,16 +87,16 @@ impl<'de> ::serde::Deserialize<'de> for RedeemScript {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct RedeemScriptLayout {
+pub struct RedeemScriptContent {
     pub public_keys: Vec<PublicKey>,
     pub quorum: usize,
 }
 
-impl RedeemScriptLayout {
+impl RedeemScriptContent {
     pub fn parse(
         context: &Secp256k1,
         script: &Script,
-    ) -> Result<RedeemScriptLayout, RedeemScriptError> {
+    ) -> Result<RedeemScriptContent, RedeemScriptError> {
         fn read_usize(instruction: Instruction) -> Option<usize> {
             match instruction {
                 Instruction::Op(op) => {
@@ -152,7 +152,7 @@ impl RedeemScriptLayout {
             public_keys
         };
         // Return parsed script
-        Ok(RedeemScriptLayout {
+        Ok(RedeemScriptContent {
             quorum,
             public_keys,
         })
@@ -160,11 +160,11 @@ impl RedeemScriptLayout {
 }
 
 #[derive(Debug)]
-pub struct RedeemScriptBuilder(RedeemScriptLayout);
+pub struct RedeemScriptBuilder(RedeemScriptContent);
 
 impl RedeemScriptBuilder {
     pub fn with_quorum(quorum: usize) -> RedeemScriptBuilder {
-        RedeemScriptBuilder(RedeemScriptLayout {
+        RedeemScriptBuilder(RedeemScriptContent {
             quorum,
             public_keys: Vec::default(),
         })
@@ -176,7 +176,7 @@ impl RedeemScriptBuilder {
         let public_keys = public_keys.into_iter().collect::<Vec<_>>();
         let quorum = public_keys.len();
 
-        RedeemScriptBuilder(RedeemScriptLayout {
+        RedeemScriptBuilder(RedeemScriptContent {
             public_keys,
             quorum,
         })
