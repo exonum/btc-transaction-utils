@@ -44,7 +44,7 @@ pub mod test_data;
 use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
 pub use sign::{InputSignature, InputSignatureRef};
 
-/// A borrowed reference of transaction input.
+/// A borrowed reference of the transaction input.
 #[derive(Debug, Copy, Clone)]
 pub struct TxInRef<'a> {
     transaction: &'a Transaction,
@@ -92,7 +92,7 @@ pub enum TxOutValue<'a> {
 }
 
 impl<'a> TxOutValue<'a> {
-    /// Returns the interesting output amount.
+    /// Returns the amount value.
     pub fn amount(self, txin: TxInRef) -> u64 {
         match self {
             TxOutValue::Amount(value) => value,

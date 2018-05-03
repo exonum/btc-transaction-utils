@@ -24,19 +24,23 @@ use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
 
 use {TxInRef, TxOutValue};
 
+/// A signature data with the embedded sighash type byte.
 #[derive(Debug, Clone, PartialEq)]
 pub struct InputSignature(Vec<u8>);
 
 impl InputSignature {
+    /// Constructs input signature from the given signature data and the given sighash type.
     pub fn new(mut inner: Vec<u8>, sighash_type: SigHashType) -> InputSignature {
         inner.push(sighash_type as u8);
         InputSignature(inner)
     }
 
+    /// Returns the signature content in canonical form.
     pub fn content(&self) -> &[u8] {
         &self.0.split_last().unwrap().1
     }
 
+    /// Returns a sighash type of the given input signature.
     pub fn sighash_type(&self) -> SigHashType {
         let byte = *self.0.last().unwrap();
         SigHashType::from_u32(byte as u32)

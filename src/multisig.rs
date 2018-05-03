@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! A helpers for manipulating with the redeem scripts which used in multisignature transactions.
+//! 
+//! If you want more explanations, please visit the official [glossary][glossary].
+//! 
+//! [glossary]: https://bitcoin.org/en/glossary/redeem-script
+
+
 use std::fmt;
 use std::str::FromStr;
 
@@ -21,16 +28,20 @@ use failure;
 use hex;
 use secp256k1::{PublicKey, Secp256k1};
 
+/// A standard redeem script.
 #[derive(Debug, PartialEq, Clone)]
 pub struct RedeemScript(pub(crate) Script);
 
 impl RedeemScript {
+    /// Tries to interpret raw script as the standard redeem script and returns error 
+    /// if the script doesn't satisfy standard.
     pub fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
         RedeemScriptContent::parse(&Secp256k1::without_caps(), &script)?;
         Ok(RedeemScript(script))
     }
 
-    pub fn info(&self) -> RedeemScriptContent {
+    /// Returns the redeem script content.
+    pub fn content(&self) -> RedeemScriptContent {
         RedeemScriptContent::parse(&Secp256k1::without_caps(), &self.0).unwrap()
     }
 }
@@ -86,13 +97,19 @@ impl<'de> ::serde::Deserialize<'de> for RedeemScript {
     }
 }
 
+/// Redeem script content.
 #[derive(Debug, PartialEq)]
 pub struct RedeemScriptContent {
+    /// The public keys of the participants of this redeem script.
     pub public_keys: Vec<PublicKey>,
+    /// The number of signatures required for the spend of input which corresponds 
+    /// to the given redeem script.
     pub quorum: usize,
 }
 
 impl RedeemScriptContent {
+    /// Tries to fetch redeem script content from the given raw script and returns error
+    /// if the script doesn't satisfy standard.
     pub fn parse(
         context: &Secp256k1,
         script: &Script,
@@ -159,10 +176,12 @@ impl RedeemScriptContent {
     }
 }
 
+/// The redeem script builder.
 #[derive(Debug)]
 pub struct RedeemScriptBuilder(RedeemScriptContent);
 
 impl RedeemScriptBuilder {
+    /// Creates builder for the given quorum value.
     pub fn with_quorum(quorum: usize) -> RedeemScriptBuilder {
         RedeemScriptBuilder(RedeemScriptContent {
             quorum,
@@ -170,6 +189,7 @@ impl RedeemScriptBuilder {
         })
     }
 
+    /// Creates builder for the given bitcoin public keys.
     pub fn with_public_keys<I: IntoIterator<Item = PublicKey>>(
         public_keys: I,
     ) -> RedeemScriptBuilder {
@@ -182,21 +202,24 @@ impl RedeemScriptBuilder {
         })
     }
 
+    /// Adds a new bitcoin public key.
     pub fn public_key<K: Into<PublicKey>>(&mut self, pub_key: K) -> &mut RedeemScriptBuilder {
         self.0.public_keys.push(pub_key.into());
         self
     }
 
+    /// Sets the quorum value.
     pub fn quorum(&mut self, quorum: usize) -> &mut RedeemScriptBuilder {
         self.0.quorum = quorum;
         self
     }
 
+    /// Finalizes the redeem script building.
     pub fn to_script(&self) -> Result<RedeemScript, RedeemScriptError> {
         let total_count = self.0.public_keys.len();
         // Check preconditions
         ensure!(self.0.quorum > 0, RedeemScriptError::NoQuorum);
-        ensure!(total_count > 1, RedeemScriptError::NotEnoughPublicKeys);
+        ensure!(total_count > 0, RedeemScriptError::NotEnoughPublicKeys);
         ensure!(
             total_count >= self.0.quorum,
             RedeemScriptError::IncorrectQuorum
@@ -216,15 +239,20 @@ impl RedeemScriptBuilder {
     }
 }
 
+/// Possible errors related to the redeem script.
 #[derive(Debug, Copy, Clone, Fail, Display, PartialEq)]
 pub enum RedeemScriptError {
+    /// Not enough keys for the quorum.
     #[display(fmt = "Not enough keys for the quorum.")]
     IncorrectQuorum,
-    #[display(fmt = "Quorum is not set.")]
+    /// Quorum was not set during the redeem script building.
+    #[display(fmt = "Quorum was not set.")]
     NoQuorum,
-    #[display(fmt = "Must specify at least two public keys.")]
+    /// Not enough public keys. Must be specified at least one public key.
+    #[display(fmt = "Not enough public keys. Must be specified at least one public key.")]
     NotEnoughPublicKeys,
-    #[display(fmt = "Given script is not standard")]
+    /// Given script is not the standard redeem script.
+    #[display(fmt = "Given script is not the standard redeem script.")]
     NotStandard,
 }
 

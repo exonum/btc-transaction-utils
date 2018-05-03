@@ -222,7 +222,7 @@ mod tests {
             )
         );
         // Verify first signature
-        let public_key = redeem_script.info().public_keys[0];
+        let public_key = redeem_script.content().public_keys[0];
         let signature = &transaction.input[0].witness[1];
         let signer = p2wsh::InputSigner::new(redeem_script);
         signer
