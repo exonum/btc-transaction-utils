@@ -41,7 +41,7 @@ impl InputSigner {
         txin: TxInRef<'a>,
         value: V,
     ) -> Sha256dHash {
-        sign::signature_hash(&self.script.0, txin, value)
+        sign::signature_hash(txin, &self.script.0, value)
     }
 
     pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
@@ -50,7 +50,7 @@ impl InputSigner {
         value: V,
         secret_key: &SecretKey,
     ) -> Result<InputSignature, secp256k1::Error> {
-        sign::sign_input(&mut self.context, &self.script.0, txin, value, secret_key)
+        sign::sign_input(&mut self.context, txin, &self.script.0, value, secret_key)
     }
 
     pub fn verify_input<'a, 'b, V, S>(
@@ -66,8 +66,8 @@ impl InputSigner {
     {
         sign::verify_input_signature(
             &self.context,
-            &self.script.0,
             txin,
+            &self.script.0,
             value,
             public_key,
             signature.as_ref(),
@@ -166,9 +166,7 @@ mod tests {
             .iter()
             .map(|keypair| {
                 let txin = TxInRef::new(&transaction, 0);
-                let signature = signer
-                    .sign_input(txin, &prev_tx, &keypair.1)
-                    .unwrap();
+                let signature = signer.sign_input(txin, &prev_tx, &keypair.1).unwrap();
                 signer
                     .verify_input(txin, &prev_tx, &keypair.0, signature.content())
                     .unwrap();

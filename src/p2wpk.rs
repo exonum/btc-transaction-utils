@@ -19,7 +19,7 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {TxInRef, TxOutValue, InputSignature};
+use {InputSignature, TxInRef, TxOutValue};
 use sign;
 
 #[derive(Debug)]
@@ -43,7 +43,7 @@ impl InputSigner {
         txin: TxInRef<'a>,
         value: V,
     ) -> Sha256dHash {
-        sign::signature_hash(&self.witness_script(), txin, value)
+        sign::signature_hash(txin, &self.witness_script(), value)
     }
 
     pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
@@ -53,7 +53,7 @@ impl InputSigner {
         secret_key: &SecretKey,
     ) -> Result<InputSignature, secp256k1::Error> {
         let script = self.witness_script();
-        sign::sign_input(&mut self.context, &script, txin, value, secret_key)
+        sign::sign_input(&mut self.context, txin, &script, value, secret_key)
     }
 
     pub fn verify_input<'a, 'b, V, S>(
@@ -69,16 +69,15 @@ impl InputSigner {
     {
         sign::verify_input_signature(
             &self.context,
-            &self.witness_script(),
             txin,
+            &self.witness_script(),
             value,
             public_key,
             signature.as_ref(),
         )
     }
 
-    pub fn spend_input(&self, input: &mut TxIn, signature: InputSignature)
-    {
+    pub fn spend_input(&self, input: &mut TxIn, signature: InputSignature) {
         input.witness = self.witness_data(signature.into());
     }
 

@@ -13,11 +13,10 @@
 // limitations under the License.
 
 //! A helpers for manipulating with the redeem scripts which used in multisignature transactions.
-//! 
+//!
 //! If you want more explanations, please visit the official [glossary][glossary].
-//! 
+//!
 //! [glossary]: https://bitcoin.org/en/glossary/redeem-script
-
 
 use std::fmt;
 use std::str::FromStr;
@@ -33,7 +32,7 @@ use secp256k1::{PublicKey, Secp256k1};
 pub struct RedeemScript(pub(crate) Script);
 
 impl RedeemScript {
-    /// Tries to interpret raw script as the standard redeem script and returns error 
+    /// Tries to interpret raw script as the standard redeem script and returns error
     /// if the script doesn't satisfy standard.
     pub fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
         RedeemScriptContent::parse(&Secp256k1::without_caps(), &script)?;
@@ -102,7 +101,7 @@ impl<'de> ::serde::Deserialize<'de> for RedeemScript {
 pub struct RedeemScriptContent {
     /// The public keys of the participants of this redeem script.
     pub public_keys: Vec<PublicKey>,
-    /// The number of signatures required for the spend of input which corresponds 
+    /// The number of signatures required for the spend of input which corresponds
     /// to the given redeem script.
     pub quorum: usize,
 }
