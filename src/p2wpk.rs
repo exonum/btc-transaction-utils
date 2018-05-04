@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! A native `P2WPK` input signer.
+
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
@@ -22,6 +24,12 @@ use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 use {InputSignature, TxInRef, TxOutValue};
 use sign;
 
+/// Creates a bitcoin address for the corresponding public key and the bitcoin network.
+pub fn address(pk: &PublicKey, network: Network) -> Address {
+    Address::p2wpkh(pk, network)
+}
+
+/// An input signer.
 #[derive(Debug)]
 pub struct InputSigner {
     context: Secp256k1,
@@ -30,6 +38,7 @@ pub struct InputSigner {
 }
 
 impl InputSigner {
+    /// Creates an input signer for the given public key and network.
     pub fn new(public_key: PublicKey, network: Network) -> InputSigner {
         InputSigner {
             context: Secp256k1::new(),
@@ -38,6 +47,11 @@ impl InputSigner {
         }
     }
 
+    /// Computes the [`BIP-143`][bip-143] compliant sighash for a [`SIGHASH_ALL`][sighash_all]
+    /// signature for the given input.
+    ///
+    /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+    /// [sighash_all]: https://bitcoin.org/en/developer-guide#signature-hash-types
     pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
@@ -46,6 +60,12 @@ impl InputSigner {
         sign::signature_hash(txin, &self.witness_script(), value)
     }
 
+    /// Computes the [`BIP-143`][bip-143] compliant signature for the given input.
+    /// Under the hood this method signs [`sighash`][signature-hash] for the given input by the
+    /// given secret key.
+    ///
+    /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+    /// [signature-hash]: struct.InputSigner.html#signature_hash
     pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
@@ -56,6 +76,7 @@ impl InputSigner {
         sign::sign_input(&mut self.context, txin, &script, value, secret_key)
     }
 
+    /// Checks correctness of the signature for the given input.
     pub fn verify_input<'a, 'b, V, S>(
         &self,
         txin: TxInRef<'a>,
@@ -77,21 +98,19 @@ impl InputSigner {
         )
     }
 
+    /// Collects the witness data for the given transaction input,
+    /// thus it becomes spent.
     pub fn spend_input(&self, input: &mut TxIn, signature: InputSignature) {
         input.witness = self.witness_data(signature.into());
     }
 
-    pub fn witness_data(&self, signature: Vec<u8>) -> Vec<Vec<u8>> {
+    fn witness_data(&self, signature: Vec<u8>) -> Vec<Vec<u8>> {
         vec![signature, self.public_key.serialize().to_vec()]
     }
 
     fn witness_script(&self) -> Script {
         Address::p2pkh(&self.public_key, self.network).script_pubkey()
     }
-}
-
-pub fn address(pk: &PublicKey, network: Network) -> Address {
-    Address::p2wpkh(pk, network)
 }
 
 #[cfg(test)]
@@ -103,7 +122,7 @@ mod tests {
     use rand::{SeedableRng, StdRng};
 
     use p2wpk;
-    use test_data::{secp_gen_keypair_with_rng, tx_from_hex};
+    use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
     use TxInRef;
 
     #[test]
@@ -111,7 +130,7 @@ mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
         let (pk, sk) = secp_gen_keypair_with_rng(&mut rng);
 
-        let prev_tx = tx_from_hex(
+        let prev_tx = btc_tx_from_hex(
             "02000000000101beccab33bc72bfc81b63fdec8a4a9a4719e4418bdb7b20e47b02074dc42f2d800000000\
              017160014f3b1b3819c1290cd5d675c1319dc7d9d98d571bcfeffffff02dceffa0200000000160014368c\
              6b7c38f0ff0839bf78d77544da96cb685bf28096980000000000160014284175e336fa10865fb4d1351c9\
@@ -164,7 +183,7 @@ mod tests {
         // Signed transaction
         signer.spend_input(&mut transaction.input[0], signature);
         // Check output
-        let expected_tx = tx_from_hex(
+        let expected_tx = btc_tx_from_hex(
             "0200000000010145f4a039a4bd6cc753ec02a22498b98427c6c288244340fff9d2abb5c63e48390100000\
              000ffffffff0100000000000000000f6a0d48656c6c6f2045786f6e756d2102483045022100bdc1be9286\
              2281061a14f7153dd57b7b3befa2b98fe85ae5d427d3921fe165ca02202f259a63f965f6d7f0503584b46\

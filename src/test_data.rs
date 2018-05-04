@@ -28,7 +28,7 @@ pub fn secp_gen_keypair_with_rng<R: Rng>(rng: &mut R) -> (PublicKey, SecretKey) 
     (pk, sk)
 }
 
-/// Generates a secret key and a corresponding public key using a cryptographically 
+/// Generates a secret key and a corresponding public key using a cryptographically
 /// secure pseudo-random number generator.
 pub fn secp_gen_keypair() -> (PublicKey, SecretKey) {
     let mut rng = rand::thread_rng();
@@ -36,9 +36,9 @@ pub fn secp_gen_keypair() -> (PublicKey, SecretKey) {
 }
 
 /// Decodes a bitcoin transaction from the given hex string.
-/// 
+///
 /// # Panics
-/// 
+///
 /// - If the given hex string can't be decoded as bitcoin transaction.
 pub fn btc_tx_from_hex(s: &str) -> Transaction {
     let bytes = ::bitcoin::util::misc::hex_bytes(s).unwrap();
