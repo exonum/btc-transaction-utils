@@ -113,6 +113,8 @@ impl RedeemScriptContent {
         context: &Secp256k1,
         script: &Script,
     ) -> Result<RedeemScriptContent, RedeemScriptError> {
+        // The lint is false positive in this case.
+        #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
         fn read_usize(instruction: Instruction) -> Option<usize> {
             match instruction {
                 Instruction::Op(op) => {

@@ -14,10 +14,10 @@
 
 //! BTC transaction utils is a small library that will help to create multisig addresses
 //! and sign a some types of the segwit transactions.
-//! 
+//!
 //! By using this library you can make the following things:
-//! 
-//! - [Create][redeem-script] a redeem script and a corresponding multisig address (3 of 4). 
+//!
+//! - [Create][redeem-script] a redeem script and a corresponding multisig address (3 of 4).
 //! - [Sign][p2wpk] the `P2WPK` inputs.
 //! - [Sign][p2wsh] the `P2WSH` inputs.
 //!
@@ -194,7 +194,7 @@
 //!     signer.spend_input(&mut transaction.input[0], signatures);
 //! }
 //! ```
-//! 
+//!
 //! [redeem-script]: #create-a-redeem-script-and-a-corresponding-multisig-address-3-of-4
 //! [p2wpk]: #sign-p2wpk-input
 //! [p2wsh]: #sign-p2wsh-input

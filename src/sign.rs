@@ -37,13 +37,13 @@ impl InputSignature {
 
     /// Returns the signature content in canonical form.
     pub fn content(&self) -> &[u8] {
-        &self.0.split_last().unwrap().1
+        self.0.split_last().unwrap().1
     }
 
     /// Returns a sighash type of the given input signature.
     pub fn sighash_type(&self) -> SigHashType {
         let byte = *self.0.last().unwrap();
-        SigHashType::from_u32(byte as u32)
+        SigHashType::from_u32(u32::from(byte))
     }
 }
 
@@ -60,7 +60,7 @@ impl<'a> InputSignatureRef<'a> {
         let (_sighash_type, content) = bytes
             .split_last()
             .ok_or_else(|| secp256k1::Error::InvalidMessage)?;
-        Signature::from_der(&ctx, content)?;
+        Signature::from_der(ctx, content)?;
         Ok(InputSignatureRef(bytes))
     }
 
@@ -72,7 +72,7 @@ impl<'a> InputSignatureRef<'a> {
     /// Returns a sighash type of the given input signature.
     pub fn sighash_type(&self) -> SigHashType {
         let byte = *self.0.last().unwrap();
-        SigHashType::from_u32(byte as u32)
+        SigHashType::from_u32(u32::from(byte))
     }
 }
 
@@ -90,7 +90,7 @@ impl AsRef<[u8]> for InputSignature {
 
 impl<'a> AsRef<[u8]> for InputSignatureRef<'a> {
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.0
     }
 }
 
@@ -117,7 +117,7 @@ pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
     value: V,
 ) -> Sha256dHash {
     let value = value.into().amount(txin);
-    SighashComponents::new(txin.transaction()).sighash_all(txin.as_ref(), &script, value)
+    SighashComponents::new(txin.transaction()).sighash_all(txin.as_ref(), script, value)
 }
 
 /// Computes the [`BIP-143`][bip-143] compliant signature for the given input.
@@ -136,7 +136,7 @@ pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
     let sighash = signature_hash(txin, script, value);
     // Make signature
     let msg = Message::from_slice(&sighash[..])?;
-    let signature = context.sign(&msg, secret_key)?.serialize_der(&context);
+    let signature = context.sign(&msg, secret_key)?.serialize_der(context);
     Ok(InputSignature::new(signature, SigHashType::All))
 }
 
@@ -159,7 +159,7 @@ where
     let sighash = signature_hash(txin, script, value);
     // Verify signature
     let msg = Message::from_slice(&sighash[..])?;
-    let sign = Signature::from_der(&context, signature)?;
+    let sign = Signature::from_der(context, signature)?;
     context.verify(&msg, &sign, public_key)
 }
 
