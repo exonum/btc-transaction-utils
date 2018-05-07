@@ -131,6 +131,12 @@ impl<'a> From<InputSignatureRef<'a>> for Vec<u8> {
     }
 }
 
+impl<'a> From<InputSignatureRef<'a>> for InputSignature {
+    fn from(s: InputSignatureRef<'a>) -> InputSignature {
+        InputSignature(s.0.to_owned())
+    }
+}
+
 /// Computes the [`BIP-143`][bip-143] compliant sighash for a [`SIGHASH_ALL`][sighash_all]
 /// signature for the given input.
 ///

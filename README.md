@@ -1,6 +1,7 @@
 # btc-transaction-utils
 
 [![Travis Build Status](https://img.shields.io/travis/exonum/btc-transaction-utils/master.svg?label=Linux)](https://travis-ci.org/exonum/btc-transaction-utils)
+[![Appveyor Build Status](https://img.shields.io/appveyor/ci/exonum-org/btc-transaction-utils/master.svg?label=Windows)](https://ci.appveyor.com/project/exonum-org/btc-transaction-utils)
 [![dependency status](https://deps.rs/repo/github/exonum/btc-transaction-utils/status.svg)](https://deps.rs/repo/github/exonum/btc-transaction-utils)
 [![Docs.rs](https://docs.rs/btc-transaction-utils/badge.svg)](https://docs.rs/btc-transaction-utils)
 ![rust 1.23+ required](https://img.shields.io/badge/rust-1.23+-blue.svg?label=Required%20Rust)
