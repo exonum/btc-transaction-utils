@@ -48,6 +48,31 @@ impl InputSignature {
 }
 
 /// A borrowed equivalent of the `InputSignature` data type.
+/// It can be useful for checking incoming signatures from the unauthorized sources.
+/// 
+/// # Examples
+/// 
+/// ```
+/// extern crate btc_transaction_utils;
+/// extern crate hex;
+/// extern crate secp256k1;
+/// 
+/// use secp256k1::Secp256k1;
+/// use btc_transaction_utils::InputSignatureRef;
+/// 
+/// fn main() {
+///     // Get a signature from the unknown source.
+///     let bytes = hex::decode(
+///         "304402201538279618a4626653775069b43d4315c7d2ff3000\
+///          8d339d0ed31ff41e628e71022028f3182fc39df28201ca4d7d\
+///          489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
+///     ).unwrap();
+///     // Try to decode it.
+///     let ctx = Secp256k1::without_caps();
+///     let signature = InputSignatureRef::from_bytes(&ctx, &bytes)
+///         .expect("Signature should be correct");
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct InputSignatureRef<'a>(&'a [u8]);
 
