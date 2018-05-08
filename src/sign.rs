@@ -49,17 +49,17 @@ impl InputSignature {
 
 /// A borrowed equivalent of the `InputSignature` data type.
 /// It can be useful for checking incoming signatures from the unauthorized sources.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// extern crate btc_transaction_utils;
 /// extern crate hex;
 /// extern crate secp256k1;
-/// 
+///
 /// use secp256k1::Secp256k1;
 /// use btc_transaction_utils::InputSignatureRef;
-/// 
+///
 /// fn main() {
 ///     // Get a signature from the unknown source.
 ///     let bytes = hex::decode(
