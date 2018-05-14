@@ -21,8 +21,8 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {InputSignature, TxInRef, TxOutValue};
 use sign;
+use {InputSignature, TxInRef, TxOutValue};
 
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
 pub fn address(pk: &PublicKey, network: Network) -> Address {
@@ -98,8 +98,7 @@ impl InputSigner {
         )
     }
 
-    /// Collects the witness data for the given transaction input,
-    /// thus it becomes spent.
+    /// Collects the witness data for the given transaction input. Thus, the input becomes spent.
     pub fn spend_input(&self, input: &mut TxIn, signature: InputSignature) {
         input.witness = self.witness_data(signature.into());
     }
@@ -121,9 +120,9 @@ mod tests {
     use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
+    use TxInRef;
     use p2wpk;
     use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
-    use TxInRef;
 
     #[test]
     fn test_native_segwit() {
@@ -143,7 +142,7 @@ mod tests {
             p2wpk::address(&pk, Network::Testnet).script_pubkey()
         );
 
-        // Unsigned transaction
+        // Unsigned transaction.
         let mut transaction = Transaction {
             version: 2,
             lock_time: 0,
@@ -166,12 +165,12 @@ mod tests {
                 },
             ],
         };
-        // Make signature
+        // Makes signature.
         let mut signer = p2wpk::InputSigner::new(pk, Network::Testnet);
         let signature = signer
             .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &sk)
             .unwrap();
-        // Verify signature
+        // Verifies signature.
         signer
             .verify_input(
                 TxInRef::new(&transaction, 0),
@@ -180,9 +179,9 @@ mod tests {
                 signature.content(),
             )
             .expect("Signature should be correct");
-        // Signed transaction
+        // Signs transaction.
         signer.spend_input(&mut transaction.input[0], signature);
-        // Check output
+        // Checks output.
         let expected_tx = btc_tx_from_hex(
             "0200000000010145f4a039a4bd6cc753ec02a22498b98427c6c288244340fff9d2abb5c63e48390100000\
              000ffffffff0100000000000000000f6a0d48656c6c6f2045786f6e756d2102483045022100bdc1be9286\

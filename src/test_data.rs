@@ -35,11 +35,11 @@ pub fn secp_gen_keypair() -> (PublicKey, SecretKey) {
     secp_gen_keypair_with_rng(&mut rng)
 }
 
-/// Decodes a bitcoin transaction from the given hex string.
+/// Decodes a Bitcoin transaction from the given hex string.
 ///
 /// # Panics
 ///
-/// - If the given hex string can't be decoded as bitcoin transaction.
+/// - If the given hex string can't be decoded as a Bitcoin transaction.
 pub fn btc_tx_from_hex(s: &str) -> Transaction {
     let bytes = ::bitcoin::util::misc::hex_bytes(s).unwrap();
     serialize::deserialize(&bytes).unwrap()

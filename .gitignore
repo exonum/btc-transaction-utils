@@ -6,6 +6,7 @@
 # cargo
 target
 */target
+*/rls
 *.rs.bk
 Cargo.lock
 

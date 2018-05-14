@@ -16,8 +16,8 @@
 
 use std::borrow::ToOwned;
 
-use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::blockdata::script::Script;
+use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
@@ -48,7 +48,7 @@ impl InputSignature {
 }
 
 /// A borrowed equivalent of the `InputSignature` data type.
-/// It can be useful for checking incoming signatures from the unauthorized sources.
+/// It can be useful for checking incoming signatures from unauthorized sources.
 ///
 /// # Examples
 ///

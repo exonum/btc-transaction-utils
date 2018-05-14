@@ -20,9 +20,9 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {InputSignature, TxInRef, TxOutValue};
 use multisig::RedeemScript;
 use sign;
+use {InputSignature, TxInRef, TxOutValue};
 
 /// Creates a bitcoin address for the corresponding redeem script and the bitcoin network.
 pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
@@ -95,8 +95,7 @@ impl InputSigner {
         )
     }
 
-    /// Collects the given input signatures into the witness data for the given transaction input,
-    /// thus it becomes spent.
+    /// Collects the given input signatures into the witness data for the given transaction input. Thus, the input becomes spent.
     pub fn spend_input<I: IntoIterator<Item = InputSignature>>(
         &self,
         input: &mut TxIn,
@@ -121,10 +120,10 @@ mod tests {
     use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
+    use TxInRef;
     use multisig::RedeemScriptBuilder;
     use p2wsh;
     use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
-    use TxInRef;
 
     #[test]
     fn test_multisig_native_segwit() {
@@ -155,7 +154,7 @@ mod tests {
             p2wsh::address(&redeem_script, Network::Testnet).script_pubkey()
         );
 
-        // Unsigned transaction
+        // Unsigned transaction.
         let mut transaction = Transaction {
             version: 2,
             lock_time: 0,
@@ -179,7 +178,7 @@ mod tests {
             ],
         };
 
-        // Signed transaction
+        // Signs transaction.
         let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
         let signatures = keypairs[0..quorum]
             .iter()
@@ -193,7 +192,7 @@ mod tests {
             })
             .collect::<Vec<_>>();
         signer.spend_input(&mut transaction.input[0], signatures);
-        // Check output
+        // Checks output.
         assert_eq!(
             transaction,
             btc_tx_from_hex(
@@ -238,7 +237,7 @@ mod tests {
                  380785c3e1c105e366ff445227cdde68e6a6461d6793a1437db847ecd04129dc0112ae00000000"
             )
         );
-        // Verify first signature
+        // Verifies first signature.
         let public_key = redeem_script.content().public_keys[0];
         let signature = &transaction.input[0].witness[1];
         let signer = p2wsh::InputSigner::new(redeem_script);

@@ -15,20 +15,20 @@ is to provide simple and clear solution for the most common cases.
 ## Features
 
 - Creation of the redeem script, which is used in the multisignature transactions.
-- Signing and verification of the `p2wsh` inputs.
-- Signing and verification of the `p2wpk` inputs.
+- Creation and checking of the applied signatures of the `p2wsh` inputs.
+- Creation and checking of the applied signatures of the `p2wpk` inputs.
 
 **Note: This library supports only the `SIGHASH_ALL` type of signatures.**
 
 ## TODO
 
-Some features are not implemented at the moment, but are desired in future releases. So any help
-in their implementation is welcomed.
+Some features are not implemented at the moment, but are desired in future releases.
+Any help in implementation of the below listed items is welcome.
 
 - Implement support for `P2SH-P2WPKH` and `P2SHP2WSH` inputs.
 - Implement `TransactionBuilder` which helps to create unsigned transactions.
 - Implement support for legacy inputs.
-- Implement universal transaction signer which can automatically detect kind of output
+- Implement universal transaction signer which can automatically detect the kind of output
   for the corresponding input.
 
 ## License

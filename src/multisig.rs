@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! A helpers for manipulating with the redeem scripts which used in multisignature transactions.
+//! Helpers for manipulating with the redeem scripts which used in multisignature transactions.
 //!
-//! If you want more explanations, please visit the official [glossary][glossary].
+//! For a more detailed explanation, please visit the official [glossary][glossary].
 //!
 //! [glossary]: https://bitcoin.org/en/glossary/redeem-script
 
@@ -32,8 +32,8 @@ use secp256k1::{PublicKey, Secp256k1};
 pub struct RedeemScript(pub(crate) Script);
 
 impl RedeemScript {
-    /// Tries to interpret raw script as the standard redeem script and returns error
-    /// if the script doesn't satisfy standard.
+    /// Tries to interpret a raw script as a standard redeem script and returns error
+    /// if the script doesn't satisfy `BIP-16` standard.
     pub fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
         RedeemScriptContent::parse(&Secp256k1::without_caps(), &script)?;
         Ok(RedeemScript(script))
@@ -101,14 +101,14 @@ impl<'de> ::serde::Deserialize<'de> for RedeemScript {
 pub struct RedeemScriptContent {
     /// The public keys of the participants of this redeem script.
     pub public_keys: Vec<PublicKey>,
-    /// The number of signatures required for the spend of input which corresponds
+    /// The number of signatures required to spend the input which corresponds
     /// to the given redeem script.
     pub quorum: usize,
 }
 
 impl RedeemScriptContent {
     /// Tries to fetch redeem script content from the given raw script and returns error
-    /// if the script doesn't satisfy standard.
+    /// if the script doesn't satisfy `BIP-16` standard.
     pub fn parse(
         context: &Secp256k1,
         script: &Script,
@@ -133,28 +133,27 @@ impl RedeemScriptContent {
         };
 
         let mut instructions = script.into_iter().peekable();
-        // parse quorum
+        // Parses quorum.
         let quorum = instructions
             .next()
             .and_then(read_usize)
             .ok_or_else(|| RedeemScriptError::NoQuorum)?;
         let public_keys = {
-            // Parse public keys
+            // Parses public keys.
             let mut public_keys = Vec::new();
             while let Some(Instruction::PushBytes(slice)) = instructions.peek().cloned() {
-                // HACK
-                // `public_keys_len` can be pushed as `OP_PUSHNUM` or as `OP_PUSHBYTES`
+                // HACK: `public_keys_len` can be pushed as `OP_PUSHNUM` or as `OP_PUSHBYTES`
                 // but its length cannot be greater than 1.
                 if slice.len() == 1 {
                     break;
                 }
-                // Extract public key from slice
+                // Extracts public key from slice.
                 let pub_key = PublicKey::from_slice(context, slice)
                     .map_err(|_| RedeemScriptError::NotStandard)?;
                 public_keys.push(pub_key);
                 instructions.next();
             }
-            // Check tail
+            // Checks tail.
             let public_keys_len = instructions
                 .next()
                 .and_then(read_usize)
@@ -169,7 +168,7 @@ impl RedeemScriptContent {
             );
             public_keys
         };
-        // Return parsed script
+        // Returns parsed script.
         Ok(RedeemScriptContent {
             quorum,
             public_keys,
@@ -249,8 +248,8 @@ pub enum RedeemScriptError {
     /// Quorum was not set during the redeem script building.
     #[display(fmt = "Quorum was not set.")]
     NoQuorum,
-    /// Not enough public keys. Must be specified at least one public key.
-    #[display(fmt = "Not enough public keys. Must be specified at least one public key.")]
+    /// Not enough public keys. At least one public key must be specified.
+    #[display(fmt = "Not enough public keys. At least one public key must be specified.")]
     NotEnoughPublicKeys,
     /// Given script is not the standard redeem script.
     #[display(fmt = "Given script is not the standard redeem script.")]
@@ -259,8 +258,8 @@ pub enum RedeemScriptError {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
     use multisig::{RedeemScript, RedeemScriptBuilder, RedeemScriptError};
+    use std::str::FromStr;
     use test_data::secp_gen_keypair;
 
     #[test]

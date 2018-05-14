@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //! BTC transaction utils is a small library that will help to create multisig addresses
-//! and sign a some types of the segwit transactions.
+//! and sign a some types of segwit transactions.
 //!
 //! By using this library you can make the following things:
 //!
@@ -35,7 +35,7 @@
 //! use btc_transaction_utils::p2wsh;
 //!
 //! fn main() {
-//!     // Generate a four key pairs.
+//!     // Generate four key pairs.
 //!     let keypairs = (0..4)
 //!         .map(|_| secp_gen_keypair())
 //!         .collect::<Vec<_>>();
@@ -82,7 +82,7 @@
 //!     // Take the corresponding key pair.
 //!     let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
 //!     let keypair = secp_gen_keypair_with_rng(&mut rng);
-//!     // Create unsigned transaction
+//!     // Create an unsigned transaction
 //!     let mut transaction = Transaction {
 //!         version: 2,
 //!         lock_time: 0,
@@ -105,7 +105,7 @@
 //!             },
 //!         ],
 //!     };
-//!     // Create signature for the given input.
+//!     // Create a signature for the given input.
 //!     let mut signer = p2wpk::InputSigner::new(keypair.0, Network::Testnet);
 //!     let signature = signer
 //!         .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1)
@@ -144,7 +144,7 @@
 //!          012103979dff5cd9045f4b6fa454d2bc5357586a85d4789123df45f83522963d9\
 //!          4e3217fb91300",
 //!     );
-//!     // Take the corresponding key pairs and redeem script.
+//!     // Take the corresponding key pairs and the redeem script.
 //!     let total_count = 18;
 //!     let quorum = 12;
 //!
@@ -158,7 +158,7 @@
 //!         .quorum(quorum)
 //!         .to_script()
 //!         .unwrap();
-//!     // Create unsigned transaction
+//!     // Create an unsigned transaction.
 //!     let mut transaction = Transaction {
 //!         version: 2,
 //!         lock_time: 0,
@@ -218,16 +218,16 @@ extern crate serde_str;
 
 #[macro_use]
 mod macros;
-mod sign;
-pub mod p2wsh;
-pub mod p2wpk;
 pub mod multisig;
+pub mod p2wpk;
+pub mod p2wsh;
+mod sign;
 pub mod test_data;
 
 use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
 pub use sign::{InputSignature, InputSignatureRef};
 
-/// A borrowed reference of the transaction input.
+/// A borrowed reference to a transaction input.
 #[derive(Debug, Copy, Clone)]
 pub struct TxInRef<'a> {
     transaction: &'a Transaction,
@@ -235,7 +235,7 @@ pub struct TxInRef<'a> {
 }
 
 impl<'a> TxInRef<'a> {
-    /// Constructs the reference to the input with the given index of the given transaction.
+    /// Constructs a reference to the input with the given index of the given transaction.
     pub fn new(transaction: &'a Transaction, index: usize) -> TxInRef<'a> {
         assert!(transaction.input.len() > index);
         TxInRef { transaction, index }
@@ -263,19 +263,19 @@ impl<'a> AsRef<TxIn> for TxInRef<'a> {
     }
 }
 
-/// An auxiliary enumeration that helps to get amount of the previous transaction output.
+/// An auxiliary enumeration that helps to get the balance of the previous transaction output.
 #[derive(Debug, Copy, Clone)]
 pub enum TxOutValue<'a> {
-    /// Just an output amount
+    /// The output balance.
     Amount(u64),
-    /// A reference to the transaction with the interesting output.
+    /// A reference to the transaction with the required output.
     PrevTx(&'a Transaction),
-    /// A reference to the right transaction output.
+    /// A reference to the transaction output to be spent.
     PrevOut(&'a TxOut),
 }
 
 impl<'a> TxOutValue<'a> {
-    /// Returns the amount value.
+    /// Returns the output balance value.
     pub fn amount(self, txin: TxInRef) -> u64 {
         match self {
             TxOutValue::Amount(value) => value,
