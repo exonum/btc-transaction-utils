@@ -9,7 +9,7 @@ addons:
     - librocksdb
 
 rust:
-  - 1.25.0
+  - 1.23.0
 
 matrix:
   allow_failures:
@@ -56,6 +56,7 @@ jobs:
   include:
   # Formatting & other lints that do not require compilation
   - env: FEATURE=lints
+    rust: 1.26.0
     install:
     - rustup component add rustfmt-preview
     - rustfmt --version

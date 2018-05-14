@@ -7,10 +7,12 @@
 ![rust 1.23+ required](https://img.shields.io/badge/rust-1.23+-blue.svg?label=Required%20Rust)
 
 BTC transaction utils is a small library that helps to create multisig addresses
-and to sign some types of segwit transactions.
+and to swiftly sign some types of segwit transactions as well as to check the
+existing signatures, if required.
 
-Manipulations with segwit transactions are not considered trivial, so the main goal
-is to provide simple and clear solution for the most common cases.
+Manipulations with segwit transactions are quite intricated, so the main goal
+is to provide a simple and clear solution for the most common operations
+as mentioned above.
 
 ## Features
 
