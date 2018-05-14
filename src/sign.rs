@@ -35,6 +35,15 @@ impl InputSignature {
         InputSignature(inner)
     }
 
+    /// Tries to construct input signature from the raw bytes.
+    pub fn from_bytes(
+        ctx: &Secp256k1,
+        bytes: Vec<u8>,
+    ) -> Result<InputSignature, secp256k1::Error> {
+        InputSignatureRef::from_bytes(ctx, bytes.as_ref())?;
+        Ok(InputSignature(bytes))
+    }    
+
     /// Returns the signature content in canonical form.
     pub fn content(&self) -> &[u8] {
         self.0.split_last().unwrap().1
@@ -199,6 +208,7 @@ fn test_input_signature_ref_incorrect() {
     let ctx = Secp256k1::without_caps();
     let bytes = b"abacaba";
     InputSignatureRef::from_bytes(&ctx, bytes).expect_err("Signature should be incorrect");
+    InputSignature::from_bytes(&ctx, bytes.to_vec()).expect_err("Signature should be incorrect");
 }
 
 #[test]
@@ -209,4 +219,5 @@ fn test_input_signature_ref_correct() {
          28201ca4d7d489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
     ).unwrap();
     InputSignatureRef::from_bytes(&ctx, &bytes).expect("Signature should be correct");
+    InputSignature::from_bytes(&ctx, bytes).expect("Signature should be correct");
 }
