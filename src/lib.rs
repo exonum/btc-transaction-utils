@@ -267,7 +267,7 @@ impl<'a> AsRef<TxIn> for TxInRef<'a> {
 #[derive(Debug, Copy, Clone)]
 pub enum TxOutValue<'a> {
     /// The output balance.
-    Amount(u64),
+    Balance(u64),
     /// A reference to the transaction with the required output.
     PrevTx(&'a Transaction),
     /// A reference to the transaction output to be spent.
@@ -276,9 +276,9 @@ pub enum TxOutValue<'a> {
 
 impl<'a> TxOutValue<'a> {
     /// Returns the output balance value.
-    pub fn amount(self, txin: TxInRef) -> u64 {
+    pub fn balance(self, txin: TxInRef) -> u64 {
         match self {
-            TxOutValue::Amount(value) => value,
+            TxOutValue::Balance(value) => value,
             TxOutValue::PrevTx(prev_tx) => prev_tx.output[txin.input().prev_index as usize].value,
             TxOutValue::PrevOut(out) => out.value,
         }
@@ -286,8 +286,8 @@ impl<'a> TxOutValue<'a> {
 }
 
 impl<'a> From<u64> for TxOutValue<'a> {
-    fn from(amount: u64) -> TxOutValue<'a> {
-        TxOutValue::Amount(amount)
+    fn from(balance: u64) -> TxOutValue<'a> {
+        TxOutValue::Balance(balance)
     }
 }
 

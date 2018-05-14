@@ -147,7 +147,7 @@ pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
     script: &Script,
     value: V,
 ) -> Sha256dHash {
-    let value = value.into().amount(txin);
+    let value = value.into().balance(txin);
     SighashComponents::new(txin.transaction()).sighash_all(txin.as_ref(), script, value)
 }
 
