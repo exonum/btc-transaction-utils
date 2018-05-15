@@ -36,13 +36,10 @@ impl InputSignature {
     }
 
     /// Tries to construct input signature from the raw bytes.
-    pub fn from_bytes(
-        ctx: &Secp256k1,
-        bytes: Vec<u8>,
-    ) -> Result<InputSignature, secp256k1::Error> {
+    pub fn from_bytes(ctx: &Secp256k1, bytes: Vec<u8>) -> Result<InputSignature, secp256k1::Error> {
         InputSignatureRef::from_bytes(ctx, bytes.as_ref())?;
         Ok(InputSignature(bytes))
-    }    
+    }
 
     /// Returns the signature content in canonical form.
     pub fn content(&self) -> &[u8] {
@@ -172,9 +169,9 @@ pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
     value: V,
     secret_key: &SecretKey,
 ) -> Result<InputSignature, secp256k1::Error> {
-    // compute sighash
+    // Computes sighash.
     let sighash = signature_hash(txin, script, value);
-    // Make signature
+    // Makes signature.
     let msg = Message::from_slice(&sighash[..])?;
     let signature = context.sign(&msg, secret_key)?.serialize_der(context);
     Ok(InputSignature::new(signature, SigHashType::All))
@@ -195,9 +192,9 @@ pub fn verify_input_signature<'a, 'b, V>(
 where
     V: Into<TxOutValue<'b>>,
 {
-    // compute sighash
+    // Computes sighash.
     let sighash = signature_hash(txin, script, value);
-    // Verify signature
+    // Verifies signature.
     let msg = Message::from_slice(&sighash[..])?;
     let sign = Signature::from_der(context, signature)?;
     context.verify(&msg, &sign, public_key)
