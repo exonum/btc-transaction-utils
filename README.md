@@ -10,15 +10,15 @@ BTC transaction utils is a small library that helps to create multisig addresses
 and to swiftly sign some types of segwit transactions as well as to check the
 existing signatures, if required.
 
-Manipulations with segwit transactions are quite intricated, so the main goal
+Manipulations with segwit transactions are quite complicated, so the main goal
 is to provide a simple and clear solution for the most common operations
 as mentioned above.
 
 ## Features
 
-- Creation of the redeem script, which is used in the multisignature transactions.
-- Creation and checking of the applied signatures of the `p2wsh` inputs.
-- Creation and checking of the applied signatures of the `p2wpk` inputs.
+- Creating of the redeem script, which is used in the multisignature transactions.
+- Creating and checking of the applied signatures of the `p2wsh` inputs.
+- Creating and checking of the applied signatures of the `p2wpk` inputs.
 
 **Note: This library supports only the `SIGHASH_ALL` type of signatures.**
 

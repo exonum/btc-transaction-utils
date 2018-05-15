@@ -32,7 +32,7 @@ use secp256k1::{PublicKey, Secp256k1};
 pub struct RedeemScript(pub(crate) Script);
 
 impl RedeemScript {
-    /// Tries to interpret a raw script as a standard redeem script and returns error
+    /// Tries to parse a raw script as a standard redeem script and returns error
     /// if the script doesn't satisfy `BIP-16` standard.
     pub fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
         RedeemScriptContent::parse(&Secp256k1::without_caps(), &script)?;
@@ -208,7 +208,7 @@ impl RedeemScriptBuilder {
         self
     }
 
-    /// Sets the quorum value.
+    /// Sets the number of signatures required to spend the input.
     pub fn quorum(&mut self, quorum: usize) -> &mut RedeemScriptBuilder {
         self.0.quorum = quorum;
         self
@@ -219,7 +219,7 @@ impl RedeemScriptBuilder {
         let total_count = self.0.public_keys.len();
         // Check preconditions
         ensure!(self.0.quorum > 0, RedeemScriptError::NoQuorum);
-        ensure!(total_count > 0, RedeemScriptError::NotEnoughPublicKeys);
+        ensure!(total_count != 0, RedeemScriptError::NotEnoughPublicKeys);
         ensure!(
             total_count >= self.0.quorum,
             RedeemScriptError::IncorrectQuorum

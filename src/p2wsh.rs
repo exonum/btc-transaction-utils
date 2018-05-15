@@ -59,7 +59,7 @@ impl InputSigner {
     }
 
     /// Computes the [`BIP-143`][bip-143] compliant signature for the given input.
-    /// Under the hood this method signs [`sighash`][signature-hash] for the given input by the
+    /// Under the hood this method signs [`sighash`][signature-hash] for the given input with the
     /// given secret key.
     ///
     /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
