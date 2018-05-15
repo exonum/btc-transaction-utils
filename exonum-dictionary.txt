@@ -52,6 +52,7 @@ gitter
 healthcheck
 idempotence
 inited
+intricated
 keepalive
 keyfile
 keyfiles
@@ -75,6 +76,7 @@ millis
 mkdir
 mpsc
 multisig
+multisignature
 mutex
 nanos
 nodelay
@@ -97,8 +99,8 @@ PUSHBYTES
 PUSHNUM
 readonly
 reddit
-Regtest
 regtest
+Regtest
 reimplemented
 repo
 repos

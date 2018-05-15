@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! A set of helpers for testing.
+
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::network::serialize;
 use rand::{self, Rng};
 use secp256k1::{PublicKey, Secp256k1, SecretKey};
 
+/// Computes a secret key and a corresponding public key using a
+/// given pseudo-random number generator.
 pub fn secp_gen_keypair_with_rng<R: Rng>(rng: &mut R) -> (PublicKey, SecretKey) {
     let context = Secp256k1::new();
     let sk = SecretKey::new(&context, rng);
@@ -24,12 +28,19 @@ pub fn secp_gen_keypair_with_rng<R: Rng>(rng: &mut R) -> (PublicKey, SecretKey) 
     (pk, sk)
 }
 
+/// Generates a secret key and a corresponding public key using a cryptographically
+/// secure pseudo-random number generator.
 pub fn secp_gen_keypair() -> (PublicKey, SecretKey) {
     let mut rng = rand::thread_rng();
     secp_gen_keypair_with_rng(&mut rng)
 }
 
-pub fn tx_from_hex(s: &str) -> Transaction {
+/// Decodes a Bitcoin transaction from the given hex string.
+///
+/// # Panics
+///
+/// - If the given hex string can't be decoded as a Bitcoin transaction.
+pub fn btc_tx_from_hex(s: &str) -> Transaction {
     let bytes = ::bitcoin::util::misc::hex_bytes(s).unwrap();
     serialize::deserialize(&bytes).unwrap()
 }

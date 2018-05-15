@@ -12,15 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! A native `P2WSH` input signer.
+
+use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
-use {TxInRef, TxOutValue, InputSignature};
 use multisig::RedeemScript;
 use sign;
+use {InputSignature, TxInRef, UnspentTxOutValue};
 
+/// Creates a bitcoin address for the corresponding redeem script and the bitcoin network.
+pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
+    Address::p2wsh(&redeem_script.0, network)
+}
+
+/// An input signer.
 #[derive(Debug)]
 pub struct InputSigner {
     context: Secp256k1,
@@ -28,6 +37,7 @@ pub struct InputSigner {
 }
 
 impl InputSigner {
+    /// Creates an input signer for the given redeem script.
     pub fn new(script: RedeemScript) -> InputSigner {
         InputSigner {
             context: Secp256k1::new(),
@@ -35,23 +45,35 @@ impl InputSigner {
         }
     }
 
-    pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
+    /// Computes the [`BIP-143`][bip-143] compliant sighash for a [`SIGHASH_ALL`][sighash_all]
+    /// signature for the given input.
+    ///
+    /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+    /// [sighash_all]: https://bitcoin.org/en/developer-guide#signature-hash-types
+    pub fn signature_hash<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
         value: V,
     ) -> Sha256dHash {
-        sign::signature_hash(&self.script.0, txin, value)
+        sign::signature_hash(txin, &self.script.0, value)
     }
 
-    pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
+    /// Computes the [`BIP-143`][bip-143] compliant signature for the given input.
+    /// Under the hood this method signs [`sighash`][signature-hash] for the given input with the
+    /// given secret key.
+    ///
+    /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+    /// [signature-hash]: struct.InputSigner.html#signature_hash
+    pub fn sign_input<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
         value: V,
         secret_key: &SecretKey,
     ) -> Result<InputSignature, secp256k1::Error> {
-        sign::sign_input(&mut self.context, &self.script.0, txin, value, secret_key)
+        sign::sign_input(&mut self.context, txin, &self.script.0, value, secret_key)
     }
 
+    /// Checks correctness of the signature for the given input.
     pub fn verify_input<'a, 'b, V, S>(
         &self,
         txin: TxInRef<'a>,
@@ -60,29 +82,34 @@ impl InputSigner {
         signature: S,
     ) -> Result<(), secp256k1::Error>
     where
-        V: Into<TxOutValue<'b>>,
+        V: Into<UnspentTxOutValue<'b>>,
         S: AsRef<[u8]>,
     {
         sign::verify_input_signature(
             &self.context,
-            &self.script.0,
             txin,
+            &self.script.0,
             value,
             public_key,
             signature.as_ref(),
         )
     }
 
-    pub fn witness_data<I: IntoIterator<Item = Vec<u8>>>(&self, signatures: I) -> Vec<Vec<u8>> {
+    /// Collects the given input signatures into the witness data for the given transaction input. Thus, the input becomes spent.
+    pub fn spend_input<I: IntoIterator<Item = InputSignature>>(
+        &self,
+        input: &mut TxIn,
+        signatures: I,
+    ) {
+        input.witness = self.witness_data(signatures.into_iter().map(Into::into));
+    }
+
+    fn witness_data<I: IntoIterator<Item = Vec<u8>>>(&self, signatures: I) -> Vec<Vec<u8>> {
         let mut witness_stack = vec![Vec::default()];
         witness_stack.extend(signatures);
         witness_stack.push(self.script.0.clone().into_vec());
         witness_stack
     }
-}
-
-pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
-    Address::p2wsh(&redeem_script.0, network)
 }
 
 #[cfg(test)]
@@ -93,10 +120,10 @@ mod tests {
     use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
+    use TxInRef;
     use multisig::RedeemScriptBuilder;
     use p2wsh;
-    use test_data::{secp_gen_keypair_with_rng, tx_from_hex};
-    use TxInRef;
+    use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
 
     #[test]
     fn test_multisig_native_segwit() {
@@ -114,7 +141,7 @@ mod tests {
             .to_script()
             .unwrap();
 
-        let prev_tx = tx_from_hex(
+        let prev_tx = btc_tx_from_hex(
             "02000000000101f8c16000cc59f9505046303944d42a6c264a322f80b46bb436115b6e306ba9950000000\
              000feffffff02f07dc81600000000160014f65eb9d72a8475dd8e26f4fa748796e211aa88691027000000\
              00000022002001fb25c3db04ca5580da43a7d38dd994650d9aa6d6ee075b4578388deed338ed024730440\
@@ -127,7 +154,7 @@ mod tests {
             p2wsh::address(&redeem_script, Network::Testnet).script_pubkey()
         );
 
-        // Unsigned transaction
+        // Unsigned transaction.
         let mut transaction = Transaction {
             version: 2,
             lock_time: 0,
@@ -151,32 +178,24 @@ mod tests {
             ],
         };
 
-        let witness_stack = {
-            let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
-            let txin = TxInRef::new(&transaction, 0);
-            let signatures = keypairs[0..quorum]
-                .iter()
-                .map(|keypair| {
-                    let signature = signer.sign_input(txin, &prev_tx, &keypair.1).unwrap();
-                    signer
-                        .verify_input(
-                            txin,
-                            &prev_tx,
-                            &keypair.0,
-                            signature.content(),
-                        )
-                        .unwrap();
-                    signature.into()
-                })
-                .collect::<Vec<_>>();
-            signer.witness_data(signatures)
-        };
-        // Signed transaction
-        transaction.input[0].witness = witness_stack;
-        // Check output
+        // Signs transaction.
+        let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
+        let signatures = keypairs[0..quorum]
+            .iter()
+            .map(|keypair| {
+                let txin = TxInRef::new(&transaction, 0);
+                let signature = signer.sign_input(txin, &prev_tx, &keypair.1).unwrap();
+                signer
+                    .verify_input(txin, &prev_tx, &keypair.0, signature.content())
+                    .unwrap();
+                signature
+            })
+            .collect::<Vec<_>>();
+        signer.spend_input(&mut transaction.input[0], signatures);
+        // Checks output.
         assert_eq!(
             transaction,
-            tx_from_hex(
+            btc_tx_from_hex(
                 "02000000000101c4eb8102889b009f55cca8a1a07f3ea388843d6afa4bd77990d2190bb9248f92010\
                  0000000ffffffff0100000000000000001d6a1b48656c6c6f2045786f6e756d2077697468206d756c\
                  7469736967210e0047304402200fbebae9eabf9b2c33bb6112a821317e0f676c44aa7814d145bb604\
@@ -218,8 +237,8 @@ mod tests {
                  380785c3e1c105e366ff445227cdde68e6a6461d6793a1437db847ecd04129dc0112ae00000000"
             )
         );
-        // Verify first signature
-        let public_key = redeem_script.info().public_keys[0];
+        // Verifies first signature.
+        let public_key = redeem_script.content().public_keys[0];
         let signature = &transaction.input[0].witness[1];
         let signer = p2wsh::InputSigner::new(redeem_script);
         signer
