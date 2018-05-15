@@ -22,7 +22,7 @@ use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
 
-use {TxInRef, TxOutValue};
+use {TxInRef, UnspentTxOutValue};
 
 /// A signature data with the embedded sighash type byte.
 #[derive(Debug, Clone, PartialEq)]
@@ -148,7 +148,7 @@ impl<'a> From<InputSignatureRef<'a>> for InputSignature {
 ///
 /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
 /// [sighash_all]: https://bitcoin.org/en/developer-guide#signature-hash-types
-pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
+pub fn signature_hash<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
     txin: TxInRef<'a>,
     script: &Script,
     value: V,
@@ -162,7 +162,7 @@ pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
 ///
 /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
 /// [signature-hash]: fn.signature_hash.html
-pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
+pub fn sign_input<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
     context: &mut Secp256k1,
     txin: TxInRef<'a>,
     script: &Script,
@@ -190,7 +190,7 @@ pub fn verify_input_signature<'a, 'b, V>(
     signature: &[u8],
 ) -> Result<(), secp256k1::Error>
 where
-    V: Into<TxOutValue<'b>>,
+    V: Into<UnspentTxOutValue<'b>>,
 {
     // Computes sighash.
     let sighash = signature_hash(txin, script, value);

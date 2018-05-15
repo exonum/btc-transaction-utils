@@ -22,7 +22,7 @@ use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
 use sign;
-use {InputSignature, TxInRef, TxOutValue};
+use {InputSignature, TxInRef, UnspentTxOutValue};
 
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
 pub fn address(pk: &PublicKey, network: Network) -> Address {
@@ -52,7 +52,7 @@ impl InputSigner {
     ///
     /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
     /// [sighash_all]: https://bitcoin.org/en/developer-guide#signature-hash-types
-    pub fn signature_hash<'a, 'b, V: Into<TxOutValue<'b>>>(
+    pub fn signature_hash<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
         value: V,
@@ -66,7 +66,7 @@ impl InputSigner {
     ///
     /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
     /// [signature-hash]: struct.InputSigner.html#signature_hash
-    pub fn sign_input<'a, 'b, V: Into<TxOutValue<'b>>>(
+    pub fn sign_input<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
         &mut self,
         txin: TxInRef<'a>,
         value: V,
@@ -85,7 +85,7 @@ impl InputSigner {
         signature: S,
     ) -> Result<(), secp256k1::Error>
     where
-        V: Into<TxOutValue<'b>>,
+        V: Into<UnspentTxOutValue<'b>>,
         S: AsRef<[u8]>,
     {
         sign::verify_input_signature(

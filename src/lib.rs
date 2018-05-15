@@ -263,42 +263,45 @@ impl<'a> AsRef<TxIn> for TxInRef<'a> {
     }
 }
 
-/// An auxiliary enumeration that helps to get the balance of the previous transaction output.
+/// An auxiliary enumeration that helps to get the balance of the previous
+/// unspent transaction output.
 #[derive(Debug, Copy, Clone)]
-pub enum TxOutValue<'a> {
+pub enum UnspentTxOutValue<'a> {
     /// The output balance.
     Balance(u64),
-    /// A reference to the transaction with the required output.
+    /// A reference to the transaction with the required unspent output.
     PrevTx(&'a Transaction),
     /// A reference to the transaction output to be spent.
     PrevOut(&'a TxOut),
 }
 
-impl<'a> TxOutValue<'a> {
+impl<'a> UnspentTxOutValue<'a> {
     /// Returns the output balance value.
     pub fn balance(self, txin: TxInRef) -> u64 {
         match self {
-            TxOutValue::Balance(value) => value,
-            TxOutValue::PrevTx(prev_tx) => prev_tx.output[txin.input().prev_index as usize].value,
-            TxOutValue::PrevOut(out) => out.value,
+            UnspentTxOutValue::Balance(value) => value,
+            UnspentTxOutValue::PrevTx(prev_tx) => {
+                prev_tx.output[txin.input().prev_index as usize].value
+            }
+            UnspentTxOutValue::PrevOut(out) => out.value,
         }
     }
 }
 
-impl<'a> From<u64> for TxOutValue<'a> {
-    fn from(balance: u64) -> TxOutValue<'a> {
-        TxOutValue::Balance(balance)
+impl<'a> From<u64> for UnspentTxOutValue<'a> {
+    fn from(balance: u64) -> UnspentTxOutValue<'a> {
+        UnspentTxOutValue::Balance(balance)
     }
 }
 
-impl<'a> From<&'a Transaction> for TxOutValue<'a> {
-    fn from(tx_ref: &'a Transaction) -> TxOutValue {
-        TxOutValue::PrevTx(tx_ref)
+impl<'a> From<&'a Transaction> for UnspentTxOutValue<'a> {
+    fn from(tx_ref: &'a Transaction) -> UnspentTxOutValue {
+        UnspentTxOutValue::PrevTx(tx_ref)
     }
 }
 
-impl<'a> From<&'a TxOut> for TxOutValue<'a> {
-    fn from(tx_out: &'a TxOut) -> TxOutValue<'a> {
-        TxOutValue::PrevOut(tx_out)
+impl<'a> From<&'a TxOut> for UnspentTxOutValue<'a> {
+    fn from(tx_out: &'a TxOut) -> UnspentTxOutValue<'a> {
+        UnspentTxOutValue::PrevOut(tx_out)
     }
 }
