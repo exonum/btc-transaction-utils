@@ -186,7 +186,7 @@ impl RedeemScriptBuilder {
         RedeemScriptBuilder(RedeemScriptContent {
             quorum: 0,
             public_keys: Vec::default(),
-        })        
+        })
     }
 
     /// Creates builder for the given quorum value.

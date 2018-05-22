@@ -14,11 +14,11 @@
 
 //! A native `P2WPK` input signer.
 
-use bitcoin::blockdata::script::Script;
+use bitcoin::blockdata::script::{Builder, Script};
 use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
-use bitcoin::util::hash::Sha256dHash;
+use bitcoin::util::hash::{Hash160, Sha256dHash};
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
 use sign;
@@ -27,6 +27,16 @@ use {InputSignature, TxInRef, UnspentTxOutValue};
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
 pub fn address(pk: &PublicKey, network: Network) -> Address {
     Address::p2wpkh(pk, network)
+}
+
+/// Creates a script pubkey for the corresponding public key.
+pub fn script_pubkey(pk: &PublicKey) -> Script {
+    let witness_version = 0;
+    let pk_hash = Hash160::from_data(&pk.serialize()[..])[..].to_vec();
+    Builder::new()
+        .push_int(witness_version)
+        .push_slice(&pk_hash)
+        .into_script()
 }
 
 /// An input signer.
@@ -139,7 +149,7 @@ mod tests {
         );
         assert_eq!(
             prev_tx.output[1].script_pubkey,
-            p2wpk::address(&pk, Network::Testnet).script_pubkey()
+            p2wpk::script_pubkey(&pk)
         );
 
         // Unsigned transaction.

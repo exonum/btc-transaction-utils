@@ -14,6 +14,7 @@
 
 //! A native `P2WSH` input signer.
 
+use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
@@ -27,6 +28,11 @@ use {InputSignature, TxInRef, UnspentTxOutValue};
 /// Creates a bitcoin address for the corresponding redeem script and the bitcoin network.
 pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
     Address::p2wsh(&redeem_script.0, network)
+}
+
+/// Creates a script pubkey for the corresponding redeem script.
+pub fn script_pubkey(redeem_script: &RedeemScript) -> Script {
+    redeem_script.0.to_v0_p2wsh()
 }
 
 /// An input signer.
@@ -117,7 +123,6 @@ mod tests {
     use bitcoin::blockdata::opcodes::All;
     use bitcoin::blockdata::script::{Builder, Script};
     use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
-    use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
     use TxInRef;
@@ -151,7 +156,7 @@ mod tests {
         );
         assert_eq!(
             prev_tx.output[1].script_pubkey,
-            p2wsh::address(&redeem_script, Network::Testnet).script_pubkey()
+            p2wsh::script_pubkey(&redeem_script)
         );
 
         // Unsigned transaction.
