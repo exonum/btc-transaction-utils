@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### New features
+
+- Added blank constructor to the `RedeemScriptBuilder`. (#3)
+- Implemented script pubkey creation in `p2wsh` and `p2pk` modules. (#3)
+
 ## 0.1 - 2018-05-16
 
 The first release of BTC transaction utils crate.
