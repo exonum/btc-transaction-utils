@@ -181,6 +181,14 @@ impl RedeemScriptContent {
 pub struct RedeemScriptBuilder(RedeemScriptContent);
 
 impl RedeemScriptBuilder {
+    /// Creates builder.
+    pub fn new() -> RedeemScriptBuilder {
+        RedeemScriptBuilder(RedeemScriptContent {
+            quorum: 0,
+            public_keys: Vec::default(),
+        })        
+    }
+
     /// Creates builder for the given quorum value.
     pub fn with_quorum(quorum: usize) -> RedeemScriptBuilder {
         RedeemScriptBuilder(RedeemScriptContent {
@@ -236,6 +244,12 @@ impl RedeemScriptBuilder {
             .push_opcode(All::OP_CHECKMULTISIG)
             .into_script();
         Ok(RedeemScript(inner))
+    }
+}
+
+impl Default for RedeemScriptBuilder {
+    fn default() -> Self {
+        RedeemScriptBuilder::new()
     }
 }
 
