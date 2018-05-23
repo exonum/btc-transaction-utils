@@ -23,7 +23,7 @@ use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
 use multisig::RedeemScript;
 use sign;
-use {InputSignature, TxInRef, UnspentTxOutValue};
+use {InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
 
 /// Creates a bitcoin address for the corresponding redeem script and the bitcoin network.
 pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
@@ -49,6 +49,16 @@ impl InputSigner {
             context: Secp256k1::new(),
             script,
         }
+    }
+
+    /// Returns a reference to the secp256k1 engine, used to execute all signature operations.
+    pub fn secp256k1_context(&self) -> &Secp256k1 {
+        &self.context
+    }
+
+    /// Returns a mutable reference to the secp256k1 engine, used to execute all signature operations.
+    pub fn secp256k1_context_mut(&mut self) -> &mut Secp256k1 {
+        &mut self.context
     }
 
     /// Computes the [`BIP-143`][bip-143] compliant sighash for a [`SIGHASH_ALL`][sighash_all]
@@ -80,7 +90,7 @@ impl InputSigner {
     }
 
     /// Checks correctness of the signature for the given input.
-    pub fn verify_input<'a, 'b, V, S>(
+    pub fn verify_input<'a, 'b, 'c, V, S>(
         &self,
         txin: TxInRef<'a>,
         value: V,
@@ -89,7 +99,7 @@ impl InputSigner {
     ) -> Result<(), secp256k1::Error>
     where
         V: Into<UnspentTxOutValue<'b>>,
-        S: AsRef<[u8]>,
+        S: Into<InputSignatureRef<'c>>,
     {
         sign::verify_input_signature(
             &self.context,
@@ -97,7 +107,7 @@ impl InputSigner {
             &self.script.0,
             value,
             public_key,
-            signature.as_ref(),
+            signature.into().content(),
         )
     }
 
@@ -125,10 +135,10 @@ mod tests {
     use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
     use rand::{SeedableRng, StdRng};
 
-    use TxInRef;
     use multisig::RedeemScriptBuilder;
     use p2wsh;
     use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
+    use {InputSignatureRef, TxInRef};
 
     #[test]
     fn test_multisig_native_segwit() {
@@ -191,7 +201,7 @@ mod tests {
                 let txin = TxInRef::new(&transaction, 0);
                 let signature = signer.sign_input(txin, &prev_tx, &keypair.1).unwrap();
                 signer
-                    .verify_input(txin, &prev_tx, &keypair.0, signature.content())
+                    .verify_input(txin, &prev_tx, &keypair.0, &signature)
                     .unwrap();
                 signature
             })
@@ -251,7 +261,8 @@ mod tests {
                 TxInRef::new(&transaction, 0),
                 &prev_tx,
                 &public_key,
-                &signature.split_last().unwrap().1,
+                InputSignatureRef::from_bytes(signer.secp256k1_context(), signature.as_ref())
+                    .unwrap(),
             )
             .expect("Signature should be correct");
     }

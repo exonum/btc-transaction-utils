@@ -22,7 +22,7 @@ use bitcoin::util::hash::{Hash160, Sha256dHash};
 use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 
 use sign;
-use {InputSignature, TxInRef, UnspentTxOutValue};
+use {InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
 
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
 pub fn address(pk: &PublicKey, network: Network) -> Address {
@@ -57,6 +57,16 @@ impl InputSigner {
         }
     }
 
+    /// Returns a reference to the secp256k1 engine, used to execute all signature operations.
+    pub fn secp256k1_context(&self) -> &Secp256k1 {
+        &self.context
+    }
+
+    /// Returns a mutable reference to the secp256k1 engine, used to execute all signature operations.
+    pub fn secp256k1_context_mut(&mut self) -> &mut Secp256k1 {
+        &mut self.context
+    }
+
     /// Computes the [`BIP-143`][bip-143] compliant sighash for a [`SIGHASH_ALL`][sighash_all]
     /// signature for the given input.
     ///
@@ -87,7 +97,7 @@ impl InputSigner {
     }
 
     /// Checks correctness of the signature for the given input.
-    pub fn verify_input<'a, 'b, V, S>(
+    pub fn verify_input<'a, 'b, 'c, V, S>(
         &self,
         txin: TxInRef<'a>,
         value: V,
@@ -96,7 +106,7 @@ impl InputSigner {
     ) -> Result<(), secp256k1::Error>
     where
         V: Into<UnspentTxOutValue<'b>>,
-        S: AsRef<[u8]>,
+        S: Into<InputSignatureRef<'c>>,
     {
         sign::verify_input_signature(
             &self.context,
@@ -104,7 +114,7 @@ impl InputSigner {
             &self.witness_script(),
             value,
             public_key,
-            signature.as_ref(),
+            signature.into().content(),
         )
     }
 
@@ -179,12 +189,7 @@ mod tests {
             .unwrap();
         // Verifies signature.
         signer
-            .verify_input(
-                TxInRef::new(&transaction, 0),
-                &prev_tx,
-                &pk,
-                signature.content(),
-            )
+            .verify_input(TxInRef::new(&transaction, 0), &prev_tx, &pk, &signature)
             .expect("Signature should be correct");
         // Signs transaction.
         signer.spend_input(&mut transaction.input[0], signature);
