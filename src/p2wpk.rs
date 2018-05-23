@@ -147,10 +147,7 @@ mod tests {
              0d840220705484b6ec70a8fc0d1f80c3a98079602595351b7a9bca7caddb9a6adb0a3440012103150514f\
              05f3e3f40c7b404b16f8a09c2c71bad3ba8da5dd1e411a7069cc080a004b91300",
         );
-        assert_eq!(
-            prev_tx.output[1].script_pubkey,
-            p2wpk::script_pubkey(&pk)
-        );
+        assert_eq!(prev_tx.output[1].script_pubkey, p2wpk::script_pubkey(&pk));
 
         // Unsigned transaction.
         let mut transaction = Transaction {
