@@ -171,6 +171,7 @@ usize
 validator
 validator's
 validators
+vout
 webhook
 webhooks
 Webhooks

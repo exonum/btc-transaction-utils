@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 0.3 - 2018-08-31
 
-### Breacking changes
+### Breaking changes
 
 - `bitcoin` dependency has been updated to the new major release `0.14.1`. (#5)
 
