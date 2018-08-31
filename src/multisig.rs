@@ -25,7 +25,7 @@ use bitcoin::blockdata::opcodes::{All, Class};
 use bitcoin::blockdata::script::{read_uint, Builder, Instruction, Script};
 use failure;
 use hex;
-use secp256k1::{PublicKey, Secp256k1};
+use secp256k1::{None, PublicKey, Secp256k1};
 
 /// A standard redeem script.
 #[derive(Debug, PartialEq, Clone)]
@@ -110,7 +110,7 @@ impl RedeemScriptContent {
     /// Tries to fetch redeem script content from the given raw script and returns error
     /// if the script doesn't satisfy `BIP-16` standard.
     pub fn parse(
-        context: &Secp256k1,
+        context: &Secp256k1<None>,
         script: &Script,
     ) -> Result<RedeemScriptContent, RedeemScriptError> {
         // The lint is false positive in this case.
@@ -132,7 +132,7 @@ impl RedeemScriptContent {
             }
         };
 
-        let mut instructions = script.into_iter().peekable();
+        let mut instructions = script.iter(true).peekable();
         // Parses quorum.
         let quorum = instructions
             .next()

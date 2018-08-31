@@ -60,7 +60,7 @@
 //!
 //! use bitcoin::blockdata::opcodes::All;
 //! use bitcoin::blockdata::script::{Builder, Script};
-//! use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
+//! use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 //! use bitcoin::network::constants::Network;
 //! use btc_transaction_utils::p2wpk;
 //! use btc_transaction_utils::test_data::{secp_gen_keypair_with_rng, btc_tx_from_hex};
@@ -88,8 +88,10 @@
 //!         lock_time: 0,
 //!         input: vec![
 //!             TxIn {
-//!                 prev_hash: prev_tx.txid(),
-//!                 prev_index: 1,
+//!                 previous_output: OutPoint {
+//!                     txid: prev_tx.txid(),
+//!                     vout: 1,
+//!                 },
 //!                 script_sig: Script::default(),
 //!                 sequence: 0xFFFFFFFF,
 //!                 witness: Vec::default(),
@@ -124,7 +126,7 @@
 //!
 //! use bitcoin::blockdata::opcodes::All;
 //! use bitcoin::blockdata::script::{Builder, Script};
-//! use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
+//! use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 //! use bitcoin::network::constants::Network;
 //! use btc_transaction_utils::multisig::RedeemScriptBuilder;
 //! use btc_transaction_utils::p2wsh;
@@ -164,8 +166,10 @@
 //!         lock_time: 0,
 //!         input: vec![
 //!             TxIn {
-//!                 prev_hash: prev_tx.txid(),
-//!                 prev_index: 1,
+//!                 previous_output: OutPoint {
+//!                     txid: prev_tx.txid(),
+//!                     vout: 1,
+//!                 },
 //!                 script_sig: Script::default(),
 //!                 sequence: 0xFFFFFFFF,
 //!                 witness: Vec::default(),
@@ -281,7 +285,7 @@ impl<'a> UnspentTxOutValue<'a> {
         match self {
             UnspentTxOutValue::Balance(value) => value,
             UnspentTxOutValue::PrevTx(prev_tx) => {
-                prev_tx.output[txin.input().prev_index as usize].value
+                prev_tx.output[txin.input().previous_output.vout as usize].value
             }
             UnspentTxOutValue::PrevOut(out) => out.value,
         }

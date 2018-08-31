@@ -56,7 +56,7 @@ jobs:
   include:
   # Formatting & other lints that do not require compilation
   - env: FEATURE=lints
-    rust: 1.26.0
+    rust: 1.28.0
     install:
     - rustup component add rustfmt-preview
     - rustfmt --version
@@ -66,16 +66,17 @@ jobs:
     - npm install markdownlint-cli
     - ./node_modules/.bin/markdownlint --version
     script:
-    - cargo fmt --all -- --write-mode=diff
+    - cargo fmt --all -- --check
     - ./node_modules/.bin/cspell {src,examples,tests}/**/*.rs
     - find . -not -path "./node_modules/*" -name "*.md" | xargs ./node_modules/.bin/cspell
     - find . -not -path "./node_modules/*" -name "*.md" | xargs ./node_modules/.bin/markdownlint --config .markdownlintrc
 
   # Clippy linting
   - env: FEATURE=clippy
-    rust: nightly-2018-05-05
+    rust: nightly-2018-08-30
     install:
-    - cargo clippy --version | grep $CLIPPY_VERS || cargo install clippy --force --vers $CLIPPY_VERS
+    - rustup component add clippy-preview
+    - cargo clippy --version
     script:
     - cargo clippy --all -- -D warnings
 
