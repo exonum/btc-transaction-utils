@@ -19,7 +19,7 @@ use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
 use bitcoin::util::hash::{Hash160, Sha256dHash};
-use secp256k1::{self, PublicKey, Secp256k1, SecretKey};
+use secp256k1::{self, All, PublicKey, Secp256k1, SecretKey};
 
 use sign;
 use {InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
@@ -42,7 +42,7 @@ pub fn script_pubkey(pk: &PublicKey) -> Script {
 /// An input signer.
 #[derive(Debug)]
 pub struct InputSigner {
-    context: Secp256k1,
+    context: Secp256k1<All>,
     public_key: PublicKey,
     network: Network,
 }
@@ -58,12 +58,12 @@ impl InputSigner {
     }
 
     /// Returns a reference to the secp256k1 engine, used to execute all signature operations.
-    pub fn secp256k1_context(&self) -> &Secp256k1 {
+    pub fn secp256k1_context(&self) -> &Secp256k1<All> {
         &self.context
     }
 
     /// Returns a mutable reference to the secp256k1 engine, used to execute all signature operations.
-    pub fn secp256k1_context_mut(&mut self) -> &mut Secp256k1 {
+    pub fn secp256k1_context_mut(&mut self) -> &mut Secp256k1<All> {
         &mut self.context
     }
 
@@ -136,13 +136,13 @@ impl InputSigner {
 mod tests {
     use bitcoin::blockdata::opcodes::All;
     use bitcoin::blockdata::script::{Builder, Script};
-    use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
+    use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
     use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
-    use TxInRef;
     use p2wpk;
     use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
+    use TxInRef;
 
     #[test]
     fn test_native_segwit() {
@@ -163,24 +163,22 @@ mod tests {
         let mut transaction = Transaction {
             version: 2,
             lock_time: 0,
-            input: vec![
-                TxIn {
-                    prev_hash: prev_tx.txid(),
-                    prev_index: 1,
-                    script_sig: Script::default(),
-                    sequence: 0xFFFFFFFF,
-                    witness: Vec::default(),
+            input: vec![TxIn {
+                previous_output: OutPoint {
+                    txid: prev_tx.txid(),
+                    vout: 1,
                 },
-            ],
-            output: vec![
-                TxOut {
-                    value: 0,
-                    script_pubkey: Builder::new()
-                        .push_opcode(All::OP_RETURN)
-                        .push_slice(b"Hello Exonum!")
-                        .into_script(),
-                },
-            ],
+                script_sig: Script::default(),
+                sequence: 0xFFFFFFFF,
+                witness: Vec::default(),
+            }],
+            output: vec![TxOut {
+                value: 0,
+                script_pubkey: Builder::new()
+                    .push_opcode(All::OP_RETURN)
+                    .push_slice(b"Hello Exonum!")
+                    .into_script(),
+            }],
         };
         // Makes signature.
         let mut signer = p2wpk::InputSigner::new(pk, Network::Testnet);

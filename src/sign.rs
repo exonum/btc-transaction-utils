@@ -20,7 +20,7 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::hash::Sha256dHash;
-use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature};
+use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature, Signing, Verification};
 
 use {TxInRef, UnspentTxOutValue};
 
@@ -36,7 +36,10 @@ impl InputSignature {
     }
 
     /// Tries to construct input signature from the raw bytes.
-    pub fn from_bytes(ctx: &Secp256k1, bytes: Vec<u8>) -> Result<InputSignature, secp256k1::Error> {
+    pub fn from_bytes<C>(
+        ctx: &Secp256k1<C>,
+        bytes: Vec<u8>,
+    ) -> Result<InputSignature, secp256k1::Error> {
         InputSignatureRef::from_bytes(ctx, bytes.as_ref())?;
         Ok(InputSignature(bytes))
     }
@@ -84,8 +87,8 @@ pub struct InputSignatureRef<'a>(&'a [u8]);
 
 impl<'a> InputSignatureRef<'a> {
     /// Tries to construct input signature from the raw bytes.
-    pub fn from_bytes(
-        ctx: &Secp256k1,
+    pub fn from_bytes<C>(
+        ctx: &Secp256k1<C>,
         bytes: &'a [u8],
     ) -> Result<InputSignatureRef<'a>, secp256k1::Error> {
         let (_sighash_type, content) = bytes
@@ -162,18 +165,22 @@ pub fn signature_hash<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
 ///
 /// [bip-143]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
 /// [signature-hash]: fn.signature_hash.html
-pub fn sign_input<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
-    context: &mut Secp256k1,
+pub fn sign_input<'a, 'b, C, V>(
+    context: &mut Secp256k1<C>,
     txin: TxInRef<'a>,
     script: &Script,
     value: V,
     secret_key: &SecretKey,
-) -> Result<InputSignature, secp256k1::Error> {
+) -> Result<InputSignature, secp256k1::Error>
+where
+    C: Signing,
+    V: Into<UnspentTxOutValue<'b>>,
+{
     // Computes sighash.
     let sighash = signature_hash(txin, script, value);
     // Makes signature.
     let msg = Message::from_slice(&sighash[..])?;
-    let signature = context.sign(&msg, secret_key)?.serialize_der(context);
+    let signature = context.sign(&msg, secret_key).serialize_der(context);
     Ok(InputSignature::new(signature, SigHashType::All))
 }
 
@@ -181,8 +188,8 @@ pub fn sign_input<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
 /// [Read more...][signature-hash]
 ///
 /// [signature-hash]: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
-pub fn verify_input_signature<'a, 'b, V>(
-    context: &Secp256k1,
+pub fn verify_input_signature<'a, 'b, C, V>(
+    context: &Secp256k1<C>,
     txin: TxInRef<'a>,
     script: &Script,
     value: V,
@@ -190,6 +197,7 @@ pub fn verify_input_signature<'a, 'b, V>(
     signature: &[u8],
 ) -> Result<(), secp256k1::Error>
 where
+    C: Verification,
     V: Into<UnspentTxOutValue<'b>>,
 {
     // Computes sighash.
