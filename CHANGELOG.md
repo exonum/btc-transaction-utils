@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## 0.4.0 - 2018-11-220
+
+### Breaking changes
+
+- `bitcoin` dependency has been updated to the new major release `0.15.1`. (#8)
+
 ## 0.3.1 - 2018-08-31
 
 ### Improvements

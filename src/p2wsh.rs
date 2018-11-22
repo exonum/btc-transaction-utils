@@ -202,8 +202,7 @@ mod tests {
                     .verify_input(txin, &prev_tx, &keypair.0, &signature)
                     .unwrap();
                 signature
-            })
-            .collect::<Vec<_>>();
+            }).collect::<Vec<_>>();
         signer.spend_input(&mut transaction.input[0], signatures);
         // Checks output.
         assert_eq!(
@@ -261,7 +260,6 @@ mod tests {
                 &public_key,
                 InputSignatureRef::from_bytes(signer.secp256k1_context(), signature.as_ref())
                     .unwrap(),
-            )
-            .expect("Signature should be correct");
+            ).expect("Signature should be correct");
     }
 }
