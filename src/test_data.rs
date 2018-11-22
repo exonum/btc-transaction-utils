@@ -15,7 +15,7 @@
 //! A set of helpers for testing.
 
 use bitcoin::blockdata::transaction::Transaction;
-use bitcoin::network::serialize;
+use bitcoin::consensus;
 use rand::{self, Rng};
 use secp256k1::{PublicKey, Secp256k1, SecretKey};
 
@@ -42,5 +42,5 @@ pub fn secp_gen_keypair() -> (PublicKey, SecretKey) {
 /// - If the given hex string can't be decoded as a Bitcoin transaction.
 pub fn btc_tx_from_hex(s: &str) -> Transaction {
     let bytes = ::bitcoin::util::misc::hex_bytes(s).unwrap();
-    serialize::deserialize(&bytes).unwrap()
+    consensus::deserialize(&bytes).unwrap()
 }
