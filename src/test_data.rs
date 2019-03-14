@@ -16,23 +16,29 @@
 
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus;
+use bitcoin::network::constants::Network;
+use bitcoin::{PrivateKey, PublicKey};
 use rand::{self, Rng};
-use secp256k1::{PublicKey, Secp256k1, SecretKey};
+use secp256k1::{Secp256k1, SecretKey};
 
-/// Computes a secret key and a corresponding public key using a
+/// Computes a bitcoin private key and a corresponding public key using a
 /// given pseudo-random number generator.
-pub fn secp_gen_keypair_with_rng<R: Rng>(rng: &mut R) -> (PublicKey, SecretKey) {
+pub fn secp_gen_keypair_with_rng<R: Rng>(rng: &mut R, network: Network) -> (PublicKey, PrivateKey) {
     let context = Secp256k1::new();
-    let sk = SecretKey::new(&context, rng);
-    let pk = PublicKey::from_secret_key(&context, &sk);
+    let sk = PrivateKey {
+        network,
+        compressed: true,
+        key: SecretKey::new(rng),
+    };
+    let pk = PublicKey::from_private_key(&context, &sk);
     (pk, sk)
 }
 
-/// Generates a secret key and a corresponding public key using a cryptographically
+/// Generates a bitcoin private key and a corresponding public key using a cryptographically
 /// secure pseudo-random number generator.
-pub fn secp_gen_keypair() -> (PublicKey, SecretKey) {
+pub fn secp_gen_keypair(network: Network) -> (PublicKey, PrivateKey) {
     let mut rng = rand::thread_rng();
-    secp_gen_keypair_with_rng(&mut rng)
+    secp_gen_keypair_with_rng(&mut rng, network)
 }
 
 /// Decodes a Bitcoin transaction from the given hex string.

@@ -21,12 +21,17 @@
 use std::fmt;
 use std::str::FromStr;
 
-use bitcoin::blockdata::opcodes::{All, Class};
-use bitcoin::blockdata::script::{read_uint, Builder, Instruction, Script};
+use bitcoin::{
+    blockdata::{
+        opcodes::{all::OP_CHECKMULTISIG, Class},
+        script::{read_uint, Builder, Instruction, Script},
+    },
+    util::psbt::serialize::Serialize,
+    PublicKey,
+};
 use failure;
 use failure_derive::Fail;
 use hex;
-use secp256k1::{None, PublicKey, Secp256k1};
 
 /// A standard redeem script.
 #[derive(Debug, PartialEq, Clone)]
@@ -36,13 +41,13 @@ impl RedeemScript {
     /// Tries to parse a raw script as a standard redeem script and returns error
     /// if the script doesn't satisfy `BIP-16` standard.
     pub fn from_script(script: Script) -> Result<RedeemScript, RedeemScriptError> {
-        RedeemScriptContent::parse(&Secp256k1::without_caps(), &script)?;
+        RedeemScriptContent::parse(&script)?;
         Ok(RedeemScript(script))
     }
 
     /// Returns the redeem script content.
     pub fn content(&self) -> RedeemScriptContent {
-        RedeemScriptContent::parse(&Secp256k1::without_caps(), &self.0).unwrap()
+        RedeemScriptContent::parse(&self.0).unwrap()
     }
 }
 
@@ -110,12 +115,7 @@ pub struct RedeemScriptContent {
 impl RedeemScriptContent {
     /// Tries to fetch redeem script content from the given raw script and returns error
     /// if the script doesn't satisfy `BIP-16` standard.
-    pub fn parse(
-        context: &Secp256k1<None>,
-        script: &Script,
-    ) -> Result<RedeemScriptContent, RedeemScriptError> {
-        // The lint is false positive in this case.
-        // #![allow(clippy::needless_pass_by_value)]
+    pub fn parse(script: &Script) -> Result<RedeemScriptContent, RedeemScriptError> {
         fn read_usize(instruction: Instruction) -> Option<usize> {
             match instruction {
                 Instruction::Op(op) => {
@@ -149,8 +149,8 @@ impl RedeemScriptContent {
                     break;
                 }
                 // Extracts public key from slice.
-                let pub_key = PublicKey::from_slice(context, slice)
-                    .map_err(|_| RedeemScriptError::NotStandard)?;
+                let pub_key =
+                    PublicKey::from_slice(slice).map_err(|_| RedeemScriptError::NotStandard)?;
                 public_keys.push(pub_key);
                 instructions.next();
             }
@@ -164,7 +164,7 @@ impl RedeemScriptContent {
                 RedeemScriptError::NotEnoughPublicKeys
             );
             ensure!(
-                Some(Instruction::Op(All::OP_CHECKMULTISIG)) == instructions.next(),
+                Some(Instruction::Op(OP_CHECKMULTISIG)) == instructions.next(),
                 RedeemScriptError::NotStandard
             );
             public_keys
@@ -242,7 +242,7 @@ impl RedeemScriptBuilder {
         }
         let inner = builder
             .push_int(total_count as i64)
-            .push_opcode(All::OP_CHECKMULTISIG)
+            .push_opcode(OP_CHECKMULTISIG)
             .into_script();
         Ok(RedeemScript(inner))
     }
@@ -275,6 +275,8 @@ pub enum RedeemScriptError {
 mod tests {
     use std::str::FromStr;
 
+    use bitcoin::network::constants::Network;
+
     use crate::{
         multisig::{RedeemScript, RedeemScriptBuilder, RedeemScriptError},
         test_data::secp_gen_keypair,
@@ -298,7 +300,9 @@ mod tests {
 
     #[test]
     fn test_redeem_script_builder_incorrect_quorum() {
-        let keys = vec![secp_gen_keypair().0, secp_gen_keypair().0];
+        let keys = (0..2)
+            .into_iter()
+            .map(|_| secp_gen_keypair(Network::Testnet).0);
         assert_eq!(
             RedeemScriptBuilder::with_public_keys(keys)
                 .quorum(3)
@@ -350,10 +354,10 @@ mod tests {
     #[test]
     fn test_redeem_script_convert_hex() {
         let script = RedeemScriptBuilder::with_quorum(3)
-            .public_key(secp_gen_keypair().0)
-            .public_key(secp_gen_keypair().0)
-            .public_key(secp_gen_keypair().0)
-            .public_key(secp_gen_keypair().0)
+            .public_key(secp_gen_keypair(Network::Testnet).0)
+            .public_key(secp_gen_keypair(Network::Testnet).0)
+            .public_key(secp_gen_keypair(Network::Testnet).0)
+            .public_key(secp_gen_keypair(Network::Testnet).0)
             .to_script()
             .unwrap();
         let string = script.to_string();

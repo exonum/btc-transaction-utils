@@ -14,14 +14,19 @@
 
 //! A native `P2WPK` input signer.
 
-use bitcoin::blockdata::script::{Builder, Script};
-use bitcoin::blockdata::transaction::TxIn;
-use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address;
-use bitcoin::util::hash::{Hash160, Sha256dHash};
-use secp256k1::{self, All, PublicKey, Secp256k1, SecretKey};
+use bitcoin::{
+    blockdata::{
+        script::{Builder, Script},
+        transaction::TxIn,
+    },
+    network::constants::Network,
+    util::{address::Address, key::PublicKey, psbt::serialize::Serialize},
+};
+use secp256k1::{self, All, Secp256k1, SecretKey};
 
-use crate::{sign, InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
+use crate::{
+    sign, Hash, Hash160, InputSignature, InputSignatureRef, Sha256dHash, TxInRef, UnspentTxOutValue,
+};
 
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
 pub fn address(pk: &PublicKey, network: Network) -> Address {
@@ -31,7 +36,7 @@ pub fn address(pk: &PublicKey, network: Network) -> Address {
 /// Creates a script pubkey for the corresponding public key.
 pub fn script_pubkey(pk: &PublicKey) -> Script {
     let witness_version = 0;
-    let pk_hash = Hash160::from_data(&pk.serialize()[..])[..].to_vec();
+    let pk_hash = Hash160::hash(&pk.key.serialize()).into_inner().to_vec();
     Builder::new()
         .push_int(witness_version)
         .push_slice(&pk_hash)
@@ -133,7 +138,7 @@ impl InputSigner {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::blockdata::opcodes::All;
+    use bitcoin::blockdata::opcodes::all::OP_RETURN;
     use bitcoin::blockdata::script::{Builder, Script};
     use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
     use bitcoin::network::constants::Network;
@@ -148,7 +153,7 @@ mod tests {
     #[test]
     fn test_native_segwit() {
         let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
-        let (pk, sk) = secp_gen_keypair_with_rng(&mut rng);
+        let (pk, sk) = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
 
         let prev_tx = btc_tx_from_hex(
             "02000000000101beccab33bc72bfc81b63fdec8a4a9a4719e4418bdb7b20e47b02074dc42f2d800000000\
@@ -176,7 +181,7 @@ mod tests {
             output: vec![TxOut {
                 value: 0,
                 script_pubkey: Builder::new()
-                    .push_opcode(All::OP_RETURN)
+                    .push_opcode(OP_RETURN)
                     .push_slice(b"Hello Exonum!")
                     .into_script(),
             }],
@@ -184,7 +189,7 @@ mod tests {
         // Makes signature.
         let mut signer = p2wpk::InputSigner::new(pk, Network::Testnet);
         let signature = signer
-            .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &sk)
+            .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &sk.key)
             .unwrap();
         // Verifies signature.
         signer
