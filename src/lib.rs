@@ -35,7 +35,7 @@
 //! fn main() {
 //!     // Generate four key pairs.
 //!     let keypairs = (0..4)
-//!         .map(|_| secp_gen_keypair())
+//!         .map(|_| secp_gen_keypair(Network::Testnet))
 //!         .collect::<Vec<_>>();
 //!     // Create a corresponding redeem script.
 //!     let public_keys = keypairs.iter().map(|keypair| keypair.0);
@@ -53,7 +53,7 @@
 //!
 //! ```
 //!
-//! use bitcoin::blockdata::opcodes::All;
+//! use bitcoin::blockdata::opcodes::all::OP_RETURN;
 //! use bitcoin::blockdata::script::{Builder, Script};
 //! use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 //! use bitcoin::network::constants::Network;
@@ -76,7 +76,7 @@
 //!     );
 //!     // Take the corresponding key pair.
 //!     let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
-//!     let keypair = secp_gen_keypair_with_rng(&mut rng);
+//!     let keypair = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
 //!     // Create an unsigned transaction
 //!     let mut transaction = Transaction {
 //!         version: 2,
@@ -96,7 +96,7 @@
 //!             TxOut {
 //!                 value: 0,
 //!                 script_pubkey: Builder::new()
-//!                     .push_opcode(All::OP_RETURN)
+//!                     .push_opcode(OP_RETURN)
 //!                     .push_slice(b"Hello Exonum!")
 //!                     .into_script(),
 //!             },
@@ -105,7 +105,7 @@
 //!     // Create a signature for the given input.
 //!     let mut signer = p2wpk::InputSigner::new(keypair.0, Network::Testnet);
 //!     let signature = signer
-//!         .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1)
+//!         .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1.key)
 //!         .unwrap();
 //!     // Finalize the transaction.
 //!     signer.spend_input(&mut transaction.input[0], signature);
@@ -116,7 +116,7 @@
 //!
 //! ```
 //!
-//! use bitcoin::blockdata::opcodes::All;
+//! use bitcoin::blockdata::opcodes::all::OP_RETURN;
 //! use bitcoin::blockdata::script::{Builder, Script};
 //! use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 //! use bitcoin::network::constants::Network;
@@ -145,7 +145,7 @@
 //!     let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
 //!     let keypairs = (0..total_count)
 //!         .into_iter()
-//!         .map(|_| secp_gen_keypair_with_rng(&mut rng))
+//!         .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
 //!         .collect::<Vec<_>>();
 //!     let public_keys = keypairs.iter().map(|keypair| keypair.0);
 //!     let redeem_script = RedeemScriptBuilder::with_public_keys(public_keys)
@@ -171,7 +171,7 @@
 //!             TxOut {
 //!                 value: 0,
 //!                 script_pubkey: Builder::new()
-//!                     .push_opcode(All::OP_RETURN)
+//!                     .push_opcode(OP_RETURN)
 //!                     .push_slice(b"Hello Exonum with multisig!")
 //!                     .into_script(),
 //!             },
@@ -183,7 +183,7 @@
 //!         .iter()
 //!         .map(|keypair| {
 //!             let txin = TxInRef::new(&transaction, 0);
-//!             signer.sign_input(txin, &prev_tx, &keypair.1).unwrap()
+//!             signer.sign_input(txin, &prev_tx, &keypair.1.key).unwrap()
 //!         })
 //!         .collect::<Vec<_>>();
 //!     // Finalize the transaction.
@@ -213,6 +213,7 @@ pub mod p2wpk;
 pub mod p2wsh;
 pub mod test_data;
 
+pub(crate) use bitcoin_hashes::{hash160::Hash as Hash160, sha256d::Hash as Sha256dHash, Hash};
 pub use sign::{InputSignature, InputSignatureRef};
 
 /// A borrowed reference to a transaction input.

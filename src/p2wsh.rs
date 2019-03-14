@@ -18,11 +18,12 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::TxIn;
 use bitcoin::network::constants::Network;
 use bitcoin::util::address::Address;
-use bitcoin::util::hash::Sha256dHash;
-use secp256k1::{self, All, PublicKey, Secp256k1, SecretKey};
+use bitcoin::PublicKey;
+use secp256k1::{self, All, Secp256k1, SecretKey};
 
 use crate::{
-    multisig::RedeemScript, sign, InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue,
+    multisig::RedeemScript, sign, InputSignature, InputSignatureRef, Sha256dHash, TxInRef,
+    UnspentTxOutValue,
 };
 
 /// Creates a bitcoin address for the corresponding redeem script and the bitcoin network.
@@ -130,9 +131,10 @@ impl InputSigner {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::blockdata::opcodes::All;
+    use bitcoin::blockdata::opcodes::all::OP_RETURN;
     use bitcoin::blockdata::script::{Builder, Script};
     use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
+    use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
     use crate::{
@@ -150,7 +152,7 @@ mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
         let keypairs = (0..total_count)
             .into_iter()
-            .map(|_| secp_gen_keypair_with_rng(&mut rng))
+            .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
             .collect::<Vec<_>>();
 
         let redeem_script = RedeemScriptBuilder::with_public_keys(keypairs.iter().map(|x| x.0))
@@ -187,7 +189,7 @@ mod tests {
             output: vec![TxOut {
                 value: 0,
                 script_pubkey: Builder::new()
-                    .push_opcode(All::OP_RETURN)
+                    .push_opcode(OP_RETURN)
                     .push_slice(b"Hello Exonum with multisig!")
                     .into_script(),
             }],
@@ -199,7 +201,7 @@ mod tests {
             .iter()
             .map(|keypair| {
                 let txin = TxInRef::new(&transaction, 0);
-                let signature = signer.sign_input(txin, &prev_tx, &keypair.1).unwrap();
+                let signature = signer.sign_input(txin, &prev_tx, &keypair.1.key).unwrap();
                 signer
                     .verify_input(txin, &prev_tx, &keypair.0, &signature)
                     .unwrap();
@@ -261,8 +263,7 @@ mod tests {
                 TxInRef::new(&transaction, 0),
                 &prev_tx,
                 &public_key,
-                InputSignatureRef::from_bytes(signer.secp256k1_context(), signature.as_ref())
-                    .unwrap(),
+                InputSignatureRef::from_bytes(signature.as_ref()).unwrap(),
             )
             .expect("Signature should be correct");
     }

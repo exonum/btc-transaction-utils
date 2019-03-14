@@ -19,10 +19,10 @@ use std::borrow::ToOwned;
 use bitcoin::blockdata::script::Script;
 use bitcoin::blockdata::transaction::SigHashType;
 use bitcoin::util::bip143::SighashComponents;
-use bitcoin::util::hash::Sha256dHash;
-use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature, Signing, Verification};
+use bitcoin::PublicKey;
+use secp256k1::{self, Message, Secp256k1, SecretKey, Signature, Signing, Verification};
 
-use crate::{TxInRef, UnspentTxOutValue};
+use crate::{Sha256dHash, TxInRef, UnspentTxOutValue};
 
 /// A signature data with the embedded sighash type byte.
 #[derive(Debug, Clone, PartialEq)]
@@ -36,11 +36,8 @@ impl InputSignature {
     }
 
     /// Tries to construct input signature from the raw bytes.
-    pub fn from_bytes<C>(
-        ctx: &Secp256k1<C>,
-        bytes: Vec<u8>,
-    ) -> Result<InputSignature, secp256k1::Error> {
-        InputSignatureRef::from_bytes(ctx, bytes.as_ref())?;
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<InputSignature, secp256k1::Error> {
+        InputSignatureRef::from_bytes(bytes.as_ref())?;
         Ok(InputSignature(bytes))
     }
 
@@ -77,8 +74,7 @@ impl InputSignature {
 ///          489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
 ///     ).unwrap();
 ///     // Try to decode it.
-///     let ctx = Secp256k1::without_caps();
-///     let signature = InputSignatureRef::from_bytes(&ctx, &bytes)
+///     let signature = InputSignatureRef::from_bytes(&bytes)
 ///         .expect("Signature should be correct");
 /// }
 /// ```
@@ -87,14 +83,11 @@ pub struct InputSignatureRef<'a>(&'a [u8]);
 
 impl<'a> InputSignatureRef<'a> {
     /// Tries to construct input signature from the raw bytes.
-    pub fn from_bytes<C>(
-        ctx: &Secp256k1<C>,
-        bytes: &'a [u8],
-    ) -> Result<InputSignatureRef<'a>, secp256k1::Error> {
+    pub fn from_bytes(bytes: &'a [u8]) -> Result<InputSignatureRef<'a>, secp256k1::Error> {
         let (_sighash_type, content) = bytes
             .split_last()
             .ok_or_else(|| secp256k1::Error::InvalidMessage)?;
-        Signature::from_der(ctx, content)?;
+        Signature::from_der(content)?;
         Ok(InputSignatureRef(bytes))
     }
 
@@ -180,7 +173,7 @@ where
     let sighash = signature_hash(txin, script, value);
     // Makes signature.
     let msg = Message::from_slice(&sighash[..])?;
-    let signature = context.sign(&msg, secret_key).serialize_der(context);
+    let signature = context.sign(&msg, secret_key).serialize_der();
     Ok(InputSignature::new(signature, SigHashType::All))
 }
 
@@ -204,26 +197,24 @@ where
     let sighash = signature_hash(txin, script, value);
     // Verifies signature.
     let msg = Message::from_slice(&sighash[..])?;
-    let sign = Signature::from_der(context, signature)?;
-    context.verify(&msg, &sign, public_key)
+    let sign = Signature::from_der(signature)?;
+    context.verify(&msg, &sign, &public_key.key)
 }
 
 #[test]
 fn test_input_signature_ref_incorrect() {
-    let ctx = Secp256k1::without_caps();
     let bytes = b"abacaba";
-    InputSignatureRef::from_bytes(&ctx, bytes).expect_err("Signature should be incorrect");
-    InputSignature::from_bytes(&ctx, bytes.to_vec()).expect_err("Signature should be incorrect");
+    InputSignatureRef::from_bytes(bytes).expect_err("Signature should be incorrect");
+    InputSignature::from_bytes(bytes.to_vec()).expect_err("Signature should be incorrect");
 }
 
 #[test]
 fn test_input_signature_ref_correct() {
-    let ctx = Secp256k1::without_caps();
     let bytes = ::hex::decode(
         "304402201538279618a4626653775069b43d4315c7d2ff30008d339d0ed31ff41e628e71022028f3182fc39df\
          28201ca4d7d489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
     )
     .unwrap();
-    InputSignatureRef::from_bytes(&ctx, &bytes).expect("Signature should be correct");
-    InputSignature::from_bytes(&ctx, bytes).expect("Signature should be correct");
+    InputSignatureRef::from_bytes(&bytes).expect("Signature should be correct");
+    InputSignature::from_bytes(bytes).expect("Signature should be correct");
 }
