@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## 0.4.0 - 2018-11-220
+## 0.5.0 - 2019-03-14
+
+### Breaking changes
+
+- `bitcoin` dependency has been updated to the new major release `0.17`. (#9)
+
+  - Methods `secp_gen_keypair_with_rng` and `secp_gen_keypair` now requires
+    bitcoin network type and returns `PrivateKey` key instead of `SecretKey`.
+  - Several methods now longer requires `Secp256k1` context.
+  - `secp256k1::PublicKey` replaced by the `bitcoin::PublicKey`.
+
+## 0.4.0 - 2018-11-22
 
 ### Breaking changes
 
