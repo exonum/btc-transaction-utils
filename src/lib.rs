@@ -26,8 +26,6 @@
 //! ## Create a redeem script and a corresponding multisig address (3 of 4).
 //!
 //! ```
-//! extern crate bitcoin;
-//! extern crate btc_transaction_utils;
 //!
 //! use bitcoin::network::constants::Network;
 //! use btc_transaction_utils::multisig::RedeemScriptBuilder;
@@ -54,9 +52,6 @@
 //! ## Sign P2WPK input
 //!
 //! ```
-//! extern crate bitcoin;
-//! extern crate btc_transaction_utils;
-//! extern crate rand;
 //!
 //! use bitcoin::blockdata::opcodes::All;
 //! use bitcoin::blockdata::script::{Builder, Script};
@@ -120,9 +115,6 @@
 //! ## Sign P2WSH input
 //!
 //! ```
-//! extern crate bitcoin;
-//! extern crate btc_transaction_utils;
-//! extern crate rand;
 //!
 //! use bitcoin::blockdata::opcodes::All;
 //! use bitcoin::blockdata::script::{Builder, Script};
@@ -203,32 +195,24 @@
 //! [p2wpk]: #sign-p2wpk-input
 //! [p2wsh]: #sign-p2wsh-input
 
-#![deny(missing_docs, missing_debug_implementations)]
-
-extern crate bitcoin;
-#[macro_use]
-extern crate display_derive;
-extern crate failure;
-#[macro_use]
-extern crate failure_derive;
-extern crate hex;
-#[cfg(test)]
-#[macro_use]
-extern crate pretty_assertions;
-extern crate rand;
-extern crate secp256k1;
-extern crate serde;
-extern crate serde_str;
+#![deny(
+    missing_debug_implementations,
+    missing_docs,
+    unsafe_code,
+    bare_trait_objects
+)]
 
 #[macro_use]
 mod macros;
+mod sign;
+
+use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
+
 pub mod multisig;
 pub mod p2wpk;
 pub mod p2wsh;
-mod sign;
 pub mod test_data;
 
-use bitcoin::blockdata::transaction::{Transaction, TxIn, TxOut};
 pub use sign::{InputSignature, InputSignatureRef};
 
 /// A borrowed reference to a transaction input.

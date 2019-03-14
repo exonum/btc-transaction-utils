@@ -24,6 +24,7 @@ use std::str::FromStr;
 use bitcoin::blockdata::opcodes::{All, Class};
 use bitcoin::blockdata::script::{read_uint, Builder, Instruction, Script};
 use failure;
+use failure_derive::Fail;
 use hex;
 use secp256k1::{None, PublicKey, Secp256k1};
 
@@ -114,7 +115,7 @@ impl RedeemScriptContent {
         script: &Script,
     ) -> Result<RedeemScriptContent, RedeemScriptError> {
         // The lint is false positive in this case.
-        #![cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+        // #![allow(clippy::needless_pass_by_value)]
         fn read_usize(instruction: Instruction) -> Option<usize> {
             match instruction {
                 Instruction::Op(op) => {
@@ -254,27 +255,30 @@ impl Default for RedeemScriptBuilder {
 }
 
 /// Possible errors related to the redeem script.
-#[derive(Debug, Copy, Clone, Fail, Display, PartialEq)]
+#[derive(Debug, Copy, Clone, Fail, PartialEq)]
 pub enum RedeemScriptError {
     /// Not enough keys for the quorum.
-    #[display(fmt = "Not enough keys for the quorum.")]
+    #[fail(display = "Not enough keys for the quorum.")]
     IncorrectQuorum,
     /// Quorum was not set during the redeem script building.
-    #[display(fmt = "Quorum was not set.")]
+    #[fail(display = "Quorum was not set.")]
     NoQuorum,
     /// Not enough public keys. At least one public key must be specified.
-    #[display(fmt = "Not enough public keys. At least one public key must be specified.")]
+    #[fail(display = "Not enough public keys. At least one public key must be specified.")]
     NotEnoughPublicKeys,
     /// Given script is not the standard redeem script.
-    #[display(fmt = "Given script is not the standard redeem script.")]
+    #[fail(display = "Given script is not the standard redeem script.")]
     NotStandard,
 }
 
 #[cfg(test)]
 mod tests {
-    use multisig::{RedeemScript, RedeemScriptBuilder, RedeemScriptError};
     use std::str::FromStr;
-    use test_data::secp_gen_keypair;
+
+    use crate::{
+        multisig::{RedeemScript, RedeemScriptBuilder, RedeemScriptError},
+        test_data::secp_gen_keypair,
+    };
 
     #[test]
     fn test_redeem_script_builder_no_quorum() {
