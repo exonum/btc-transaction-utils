@@ -21,8 +21,7 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::{Hash160, Sha256dHash};
 use secp256k1::{self, All, PublicKey, Secp256k1, SecretKey};
 
-use sign;
-use {InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
+use crate::{sign, InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
 
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
 pub fn address(pk: &PublicKey, network: Network) -> Address {
@@ -140,9 +139,11 @@ mod tests {
     use bitcoin::network::constants::Network;
     use rand::{SeedableRng, StdRng};
 
-    use p2wpk;
-    use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
-    use TxInRef;
+    use crate::{
+        p2wpk,
+        test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng},
+        TxInRef,
+    };
 
     #[test]
     fn test_native_segwit() {

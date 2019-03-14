@@ -22,7 +22,7 @@ use bitcoin::util::bip143::SighashComponents;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, Message, PublicKey, Secp256k1, SecretKey, Signature, Signing, Verification};
 
-use {TxInRef, UnspentTxOutValue};
+use crate::{TxInRef, UnspentTxOutValue};
 
 /// A signature data with the embedded sighash type byte.
 #[derive(Debug, Clone, PartialEq)]
@@ -222,7 +222,8 @@ fn test_input_signature_ref_correct() {
     let bytes = ::hex::decode(
         "304402201538279618a4626653775069b43d4315c7d2ff30008d339d0ed31ff41e628e71022028f3182fc39df\
          28201ca4d7d489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
-    ).unwrap();
+    )
+    .unwrap();
     InputSignatureRef::from_bytes(&ctx, &bytes).expect("Signature should be correct");
     InputSignature::from_bytes(&ctx, bytes).expect("Signature should be correct");
 }

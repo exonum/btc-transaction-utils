@@ -21,9 +21,9 @@ use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use secp256k1::{self, All, PublicKey, Secp256k1, SecretKey};
 
-use multisig::RedeemScript;
-use sign;
-use {InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue};
+use crate::{
+    multisig::RedeemScript, sign, InputSignature, InputSignatureRef, TxInRef, UnspentTxOutValue,
+};
 
 /// Creates a bitcoin address for the corresponding redeem script and the bitcoin network.
 pub fn address(redeem_script: &RedeemScript, network: Network) -> Address {
@@ -135,10 +135,12 @@ mod tests {
     use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
     use rand::{SeedableRng, StdRng};
 
-    use multisig::RedeemScriptBuilder;
-    use p2wsh;
-    use test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng};
-    use {InputSignatureRef, TxInRef};
+    use crate::{
+        multisig::RedeemScriptBuilder,
+        p2wsh,
+        test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng},
+        InputSignatureRef, TxInRef,
+    };
 
     #[test]
     fn test_multisig_native_segwit() {
@@ -202,7 +204,8 @@ mod tests {
                     .verify_input(txin, &prev_tx, &keypair.0, &signature)
                     .unwrap();
                 signature
-            }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
         signer.spend_input(&mut transaction.input[0], signatures);
         // Checks output.
         assert_eq!(
@@ -260,6 +263,7 @@ mod tests {
                 &public_key,
                 InputSignatureRef::from_bytes(signer.secp256k1_context(), signature.as_ref())
                     .unwrap(),
-            ).expect("Signature should be correct");
+            )
+            .expect("Signature should be correct");
     }
 }
