@@ -236,7 +236,7 @@ impl RedeemScriptBuilder {
         // Construct simple redeem script in form like <1 <pubkey1> <pubkey2> 2 CHECKMULTISIG>
         // See https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wsh
         let mut builder = Builder::default().push_int(self.0.quorum as i64);
-        let compressed_keys = self.0.public_keys.iter().map(|key| key.serialize());
+        let compressed_keys = self.0.public_keys.iter().map(Serialize::serialize);
         for key in compressed_keys {
             builder = builder.push_slice(key.as_ref());
         }
