@@ -1,6 +1,6 @@
 [package]
 name = "btc-transaction-utils"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2018"
 description = "A collection of helpers for signing bitcoin transactions with segwit."
 authors = ["The Exonum Team <exonum@bitfury.com>"]
@@ -12,7 +12,7 @@ categories = ["cryptography"]
 keywords = ["crypto", "bitcoin", "segwit"]
 
 [dependencies]
-bitcoin = { version = "0.17" }
+bitcoin = { version = "0.18" }
 bitcoin_hashes = "0.3"
 failure = "0.1"
 failure_derive = "0.1"
