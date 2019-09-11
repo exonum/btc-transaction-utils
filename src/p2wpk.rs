@@ -138,11 +138,14 @@ impl InputSigner {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::blockdata::opcodes::all::OP_RETURN;
-    use bitcoin::blockdata::script::{Builder, Script};
-    use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
-    use bitcoin::network::constants::Network;
-    use rand::{SeedableRng, StdRng};
+    use bitcoin::{
+        blockdata::opcodes::all::OP_RETURN,
+        blockdata::script::{Builder, Script},
+        blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut},
+        network::constants::Network,
+    };
+    use rand::{SeedableRng};
+    use rand_xorshift::XorShiftRng;
 
     use crate::{
         p2wpk,
@@ -152,7 +155,7 @@ mod tests {
 
     #[test]
     fn test_native_segwit() {
-        let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
+        let mut rng = XorShiftRng::from_seed([1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0]);
         let (pk, sk) = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
 
         let prev_tx = btc_tx_from_hex(
@@ -175,7 +178,7 @@ mod tests {
                     vout: 1,
                 },
                 script_sig: Script::default(),
-                sequence: 0xFFFFFFFF,
+                sequence: 0xFFFF_FFFF,
                 witness: Vec::default(),
             }],
             output: vec![TxOut {

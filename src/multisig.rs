@@ -18,9 +18,6 @@
 //!
 //! [glossary]: https://bitcoin.org/en/glossary/redeem-script
 
-use std::fmt;
-use std::str::FromStr;
-
 use bitcoin::{
     blockdata::{
         opcodes::{all::OP_CHECKMULTISIG, Class},
@@ -32,6 +29,8 @@ use bitcoin::{
 use failure;
 use failure_derive::Fail;
 use hex;
+
+use std::{fmt, str::FromStr};
 
 /// A standard redeem script.
 #[derive(Debug, PartialEq, Clone)]
@@ -301,7 +300,6 @@ mod tests {
     #[test]
     fn test_redeem_script_builder_incorrect_quorum() {
         let keys = (0..2)
-            .into_iter()
             .map(|_| secp_gen_keypair(Network::Testnet).0);
         assert_eq!(
             RedeemScriptBuilder::with_public_keys(keys)
