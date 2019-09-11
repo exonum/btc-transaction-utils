@@ -14,11 +14,10 @@
 
 //! A native `P2WSH` input signer.
 
-use bitcoin::blockdata::script::Script;
-use bitcoin::blockdata::transaction::TxIn;
-use bitcoin::network::constants::Network;
-use bitcoin::util::address::Address;
-use bitcoin::PublicKey;
+use bitcoin::{
+    blockdata::script::Script, blockdata::transaction::TxIn, network::constants::Network,
+    util::address::Address, PublicKey,
+};
 use secp256k1::{self, All, Secp256k1, SecretKey};
 
 use crate::{
@@ -131,11 +130,14 @@ impl InputSigner {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::blockdata::opcodes::all::OP_RETURN;
-    use bitcoin::blockdata::script::{Builder, Script};
-    use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
-    use bitcoin::network::constants::Network;
-    use rand::{SeedableRng, StdRng};
+    use bitcoin::{
+        blockdata::opcodes::all::OP_RETURN,
+        blockdata::script::{Builder, Script},
+        blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut},
+        network::constants::Network,
+    };
+    use rand::SeedableRng;
+    use rand_xorshift::XorShiftRng;
 
     use crate::{
         multisig::RedeemScriptBuilder,
@@ -149,9 +151,8 @@ mod tests {
         let total_count = 18;
         let quorum = 12;
 
-        let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
+        let mut rng = XorShiftRng::from_seed([1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0]);
         let keypairs = (0..total_count)
-            .into_iter()
             .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
             .collect::<Vec<_>>();
 
@@ -183,7 +184,7 @@ mod tests {
                     vout: 1,
                 },
                 script_sig: Script::default(),
-                sequence: 0xFFFFFFFF,
+                sequence: 0xFFFF_FFFF,
                 witness: Vec::default(),
             }],
             output: vec![TxOut {

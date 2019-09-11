@@ -173,7 +173,7 @@ where
     let sighash = signature_hash(txin, script, value);
     // Makes signature.
     let msg = Message::from_slice(&sighash[..])?;
-    let signature = context.sign(&msg, secret_key).serialize_der();
+    let signature = context.sign(&msg, secret_key).serialize_der().to_vec();
     Ok(InputSignature::new(signature, SigHashType::All))
 }
 
