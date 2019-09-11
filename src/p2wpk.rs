@@ -144,19 +144,16 @@ mod tests {
         blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut},
         network::constants::Network,
     };
-    use rand::{SeedableRng};
-    use rand_xorshift::XorShiftRng;
 
     use crate::{
         p2wpk,
-        test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng},
+        test_data::{btc_tx_from_hex, keypair_from_wif},
         TxInRef,
     };
 
     #[test]
     fn test_native_segwit() {
-        let mut rng = XorShiftRng::from_seed([1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0]);
-        let (pk, sk) = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
+        let (pk, sk) = keypair_from_wif("cPHmynxvqfr7sXsJcohiGzoPGBShggxL6VWUdW14skohFZ1LQoeV");
 
         let prev_tx = btc_tx_from_hex(
             "02000000000101beccab33bc72bfc81b63fdec8a4a9a4719e4418bdb7b20e47b02074dc42f2d800000000\

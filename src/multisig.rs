@@ -274,11 +274,9 @@ pub enum RedeemScriptError {
 mod tests {
     use std::str::FromStr;
 
-    use bitcoin::network::constants::Network;
-
     use crate::{
         multisig::{RedeemScript, RedeemScriptBuilder, RedeemScriptError},
-        test_data::secp_gen_keypair,
+        test_data::keypair_from_wif,
     };
 
     #[test]
@@ -299,8 +297,14 @@ mod tests {
 
     #[test]
     fn test_redeem_script_builder_incorrect_quorum() {
-        let keys = (0..2)
-            .map(|_| secp_gen_keypair(Network::Testnet).0);
+        let keys = vec![
+            "cPHmynxvqfr7sXsJcohiGzoPGBShggxL6VWUdW14skohFZ1LQoeV",
+            "cTtSTL1stvg2tmK349WTmQDfHLMLqkkxwuo8ZJeQov9zEhtYtb4u",
+        ]
+        .into_iter()
+        .map(|wif| keypair_from_wif(wif).0)
+        .collect::<Vec<_>>();
+
         assert_eq!(
             RedeemScriptBuilder::with_public_keys(keys)
                 .quorum(3)
@@ -351,11 +355,21 @@ mod tests {
 
     #[test]
     fn test_redeem_script_convert_hex() {
+        let public_keys = vec![
+            "cMs8EwSJwfQ5DrVqYcDgjKV52k3DrGZhK1MDNrabY16WxPjvACgG",
+            "cVwwcsdqRGV1cV1HLX1y7ccg2iu7aSHvSVRW3sPZpgZGr6Wzg9VR",
+            "cNqiotwcBrkLsFMC5wwehvSQ6CcjXu74U4mEeZn6vx3ZLYH2k3QY",
+            "cSAyWaxS6SwWQ5REE1LuNp1Vqi771JsTFRU1ZisUHkKRiYLg6grq",
+        ]
+        .into_iter()
+        .map(|wif| keypair_from_wif(wif).0)
+        .collect::<Vec<_>>();
+
         let script = RedeemScriptBuilder::with_quorum(3)
-            .public_key(secp_gen_keypair(Network::Testnet).0)
-            .public_key(secp_gen_keypair(Network::Testnet).0)
-            .public_key(secp_gen_keypair(Network::Testnet).0)
-            .public_key(secp_gen_keypair(Network::Testnet).0)
+            .public_key(public_keys[0])
+            .public_key(public_keys[1])
+            .public_key(public_keys[2])
+            .public_key(public_keys[3])
             .to_script()
             .unwrap();
         let string = script.to_string();

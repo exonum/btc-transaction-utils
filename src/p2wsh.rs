@@ -134,27 +134,42 @@ mod tests {
         blockdata::opcodes::all::OP_RETURN,
         blockdata::script::{Builder, Script},
         blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut},
-        network::constants::Network,
     };
-    use rand::SeedableRng;
-    use rand_xorshift::XorShiftRng;
 
     use crate::{
         multisig::RedeemScriptBuilder,
         p2wsh,
-        test_data::{btc_tx_from_hex, secp_gen_keypair_with_rng},
+        test_data::{btc_tx_from_hex, keypair_from_wif},
         InputSignatureRef, TxInRef,
     };
 
     #[test]
     fn test_multisig_native_segwit() {
-        let total_count = 18;
-        let quorum = 12;
+        let keypairs = vec![
+            "cPHmynxvqfr7sXsJcohiGzoPGBShggxL6VWUdW14skohFZ1LQoeV",
+            "cTtSTL1stvg2tmK349WTmQDfHLMLqkkxwuo8ZJeQov9zEhtYtb4u",
+            "cQZZ7WvJUb6hXxCq9SF6516vb9bavQRPn2t3g9LFUtAoZuY7vNFk",
+            "cQoWXdtbsRP9nu6i8qX8h3qQmM25XDF7XJMBjgnqqr5MqDxmmkjN",
+            "cUccK257yZdqHDvGxNCqogdA87vz8C1FU1hDjQ35YuCy1mshCF5P",
+            "cVYXjWXoXbFAP3gWZc2zz5UzQV6Z9CX8myPijDutVPSZbX5bnv6h",
+            "cPZL4ehXEuB6mNniHrwDMCLKPSVKwwStTLkYg4gTtuUAAEPWyGzT",
+            "cTuBNbrnxkv55aHvJA4vTbCnqhAcc9vSNeVjwvR7t7255xY6SiHx",
+            "cTDddY9hBLv2R3twww1J85A8zUdpWjkjmKeTcxt1VuyHN6sv8sSf",
+            "cUfTuu8CHqrv6PKY8jp1CUrdaAKdqTtjWRP1v3fuXHvVkxoHACtA",
+            "cMs8EwSJwfQ5DrVqYcDgjKV52k3DrGZhK1MDNrabY16WxPjvACgG",
+            "cVwwcsdqRGV1cV1HLX1y7ccg2iu7aSHvSVRW3sPZpgZGr6Wzg9VR",
+            "cNqiotwcBrkLsFMC5wwehvSQ6CcjXu74U4mEeZn6vx3ZLYH2k3QY",
+            "cSAyWaxS6SwWQ5REE1LuNp1Vqi771JsTFRU1ZisUHkKRiYLg6grq",
+            "cTzJsaKdspquqTnGqz2iayMsm2r6CTkeC4KtjoZqXUu6TPzGcAoB",
+            "cRujmDjvBVbmjV4PzY2e9u8C7D5UABxFnyPyVe9XhPCfBTcRM5DX",
+            "cV8eYCREAdvSgLA5Pv1Q2L8UZwAmU5Gdan3dUUVDDGwnQqT5U9Ki",
+            "cUAfUuEojwoxkYsBNHjdYjEqKawwSieMGGqvtHjJVQj3Q4EaB8Bd",
+        ]
+        .into_iter()
+        .map(keypair_from_wif)
+        .collect::<Vec<_>>();
 
-        let mut rng = XorShiftRng::from_seed([1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0]);
-        let keypairs = (0..total_count)
-            .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
-            .collect::<Vec<_>>();
+        let quorum = 12;
 
         let redeem_script = RedeemScriptBuilder::with_public_keys(keypairs.iter().map(|x| x.0))
             .quorum(quorum)
