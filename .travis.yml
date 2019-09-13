@@ -1,7 +1,7 @@
 language: rust
 
 rust:
-  - 1.34.1
+  - 1.37.0
 
 matrix:
   allow_failures:
@@ -37,9 +37,7 @@ jobs:
     - ./node_modules/.bin/markdownlint --version
     script:
     - cargo fmt --all -- --check
-    - ./node_modules/.bin/cspell {src,examples,tests}/**/*.rs
-    - find . -not -path "./node_modules/*" -name "*.md" | xargs ./node_modules/.bin/cspell
-    - find . -not -path "./node_modules/*" -name "*.md" | xargs ./node_modules/.bin/markdownlint --config .markdownlintrc
+    - ./run-lints.sh
 
   # Clippy linting
   - name: clippy
