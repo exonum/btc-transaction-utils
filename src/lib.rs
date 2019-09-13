@@ -53,14 +53,18 @@
 //!
 //! ```
 //!
-//! use bitcoin::blockdata::opcodes::all::OP_RETURN;
-//! use bitcoin::blockdata::script::{Builder, Script};
-//! use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
-//! use bitcoin::network::constants::Network;
-//! use btc_transaction_utils::p2wpk;
-//! use btc_transaction_utils::test_data::{secp_gen_keypair_with_rng, btc_tx_from_hex};
-//! use btc_transaction_utils::TxInRef;
-//! use rand::{SeedableRng, StdRng};
+//! use bitcoin::{
+//!     blockdata::opcodes::all::OP_RETURN,
+//!     blockdata::script::{Builder, Script},
+//!     blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut},
+//!     network::constants::Network
+//! };
+//! use btc_transaction_utils::{
+//!     p2wpk,
+//!     test_data::{secp_gen_keypair_with_rng, btc_tx_from_hex},
+//!     TxInRef
+//! };
+//! use rand::prelude::*;
 //!
 //! fn main() {
 //!     // Take a transaction with the unspent P2WPK output.
@@ -75,7 +79,7 @@
 //!          d3ba8da5dd1e411a7069cc080a004b91300",
 //!     );
 //!     // Take the corresponding key pair.
-//!     let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
+//!     let mut rng = thread_rng();
 //!     let keypair = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
 //!     // Create an unsigned transaction
 //!     let mut transaction = Transaction {
@@ -116,15 +120,19 @@
 //!
 //! ```
 //!
-//! use bitcoin::blockdata::opcodes::all::OP_RETURN;
-//! use bitcoin::blockdata::script::{Builder, Script};
-//! use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
-//! use bitcoin::network::constants::Network;
-//! use btc_transaction_utils::multisig::RedeemScriptBuilder;
-//! use btc_transaction_utils::p2wsh;
-//! use btc_transaction_utils::test_data::{secp_gen_keypair_with_rng, btc_tx_from_hex};
-//! use btc_transaction_utils::TxInRef;
-//! use rand::{SeedableRng, StdRng};
+//! use bitcoin::{
+//!     blockdata::opcodes::all::OP_RETURN,
+//!     blockdata::script::{Builder, Script},
+//!     blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut},
+//!     network::constants::Network
+//! };
+//! use btc_transaction_utils::{
+//!     multisig::RedeemScriptBuilder,
+//!     p2wsh,
+//!     test_data::{secp_gen_keypair_with_rng, btc_tx_from_hex},
+//!     TxInRef
+//! };
+//! use rand::prelude::*;
 //!
 //! fn main() {
 //!     // Take a transaction with the unspent P2WSH output.
@@ -142,7 +150,7 @@
 //!     let total_count = 18;
 //!     let quorum = 12;
 //!
-//!     let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_ref());
+//!     let mut rng = thread_rng();
 //!     let keypairs = (0..total_count)
 //!         .into_iter()
 //!         .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
