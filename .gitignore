@@ -24,5 +24,10 @@ __pycache__/
 *.orig
 .python-version
 
+# node
+node_modules
+npm-debug.log
+package-lock.json
+
 # Docker
 # docker/images
