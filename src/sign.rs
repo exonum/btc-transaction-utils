@@ -14,13 +14,13 @@
 
 //! Helper functions to create and verify segwit input signatures with the sighash all type.
 
-use std::borrow::ToOwned;
-
-use bitcoin::blockdata::script::Script;
-use bitcoin::blockdata::transaction::SigHashType;
-use bitcoin::util::bip143::SighashComponents;
-use bitcoin::PublicKey;
+use bitcoin::{
+    blockdata::script::Script, blockdata::transaction::SigHashType,
+    util::bip143::SighashComponents, PublicKey,
+};
 use secp256k1::{self, Message, Secp256k1, SecretKey, Signature, Signing, Verification};
+
+use std::borrow::ToOwned;
 
 use crate::{Sha256dHash, TxInRef, UnspentTxOutValue};
 
