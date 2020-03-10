@@ -59,24 +59,18 @@ impl InputSignature {
 /// # Examples
 ///
 /// ```
-/// extern crate btc_transaction_utils;
-/// extern crate hex;
-/// extern crate secp256k1;
-///
 /// use secp256k1::Secp256k1;
 /// use btc_transaction_utils::InputSignatureRef;
 ///
-/// fn main() {
-///     // Get a signature from the unknown source.
-///     let bytes = hex::decode(
-///         "304402201538279618a4626653775069b43d4315c7d2ff3000\
-///          8d339d0ed31ff41e628e71022028f3182fc39df28201ca4d7d\
-///          489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
-///     ).unwrap();
-///     // Try to decode it.
-///     let signature = InputSignatureRef::from_bytes(&bytes)
-///         .expect("Signature should be correct");
-/// }
+/// // Get a signature from the unknown source.
+/// let bytes = hex::decode(
+///     "304402201538279618a4626653775069b43d4315c7d2ff3000\
+///      8d339d0ed31ff41e628e71022028f3182fc39df28201ca4d7d\
+///      489aece7bc5bc6bfe05b09b6a9d3b70bf5f3743101",
+/// ).unwrap();
+/// // Try to decode it.
+/// let signature = InputSignatureRef::from_bytes(&bytes)
+///     .expect("Signature should be correct");
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct InputSignatureRef<'a>(&'a [u8]);
@@ -150,7 +144,9 @@ pub fn signature_hash<'a, 'b, V: Into<UnspentTxOutValue<'b>>>(
     value: V,
 ) -> Sha256dHash {
     let value = value.into().balance(txin);
-    SighashComponents::new(txin.transaction()).sighash_all(txin.as_ref(), script, value)
+    SighashComponents::new(txin.transaction)
+        .sighash_all(txin.as_ref(), script, value)
+        .as_hash()
 }
 
 /// Computes the [`BIP-143`][bip-143] compliant signature for the given input.

@@ -26,33 +26,29 @@
 //! ## Create a redeem script and a corresponding multisig address (3 of 4).
 //!
 //! ```
-//!
 //! use bitcoin::network::constants::Network;
 //! use btc_transaction_utils::multisig::RedeemScriptBuilder;
 //! use btc_transaction_utils::test_data::secp_gen_keypair;
 //! use btc_transaction_utils::p2wsh;
 //!
-//! fn main() {
-//!     // Generate four key pairs.
-//!     let keypairs = (0..4)
-//!         .map(|_| secp_gen_keypair(Network::Testnet))
-//!         .collect::<Vec<_>>();
-//!     // Create a corresponding redeem script.
-//!     let public_keys = keypairs.iter().map(|keypair| keypair.0);
-//!     let script = RedeemScriptBuilder::with_public_keys(public_keys)
-//!         .quorum(3)
-//!         .to_script()
-//!         .unwrap();
-//!     // Create a corresponding testnet address for the given redeem script.
-//!     let address = p2wsh::address(&script, Network::Testnet);
-//!     println!("{}", address.to_string());
-//! }
+//! // Generate four key pairs.
+//! let keypairs = (0..4)
+//!     .map(|_| secp_gen_keypair(Network::Testnet))
+//!     .collect::<Vec<_>>();
+//! // Create a corresponding redeem script.
+//! let public_keys = keypairs.iter().map(|keypair| keypair.0);
+//! let script = RedeemScriptBuilder::with_public_keys(public_keys)
+//!     .quorum(3)
+//!     .to_script()
+//!     .unwrap();
+//! // Create a corresponding testnet address for the given redeem script.
+//! let address = p2wsh::address(&script, Network::Testnet);
+//! println!("{}", address.to_string());
 //! ```
 //!
 //! ## Sign P2WPK input
 //!
 //! ```
-//!
 //! use bitcoin::{
 //!     blockdata::opcodes::all::OP_RETURN,
 //!     blockdata::script::{Builder, Script},
@@ -66,60 +62,57 @@
 //! };
 //! use rand::prelude::*;
 //!
-//! fn main() {
-//!     // Take a transaction with the unspent P2WPK output.
-//!     let prev_tx = btc_tx_from_hex(
-//!         "02000000000101beccab33bc72bfc81b63fdec8a4a9a4719e4418bdb7b20e47b0\
-//!          2074dc42f2d800000000017160014f3b1b3819c1290cd5d675c1319dc7d9d98d5\
-//!          71bcfeffffff02dceffa0200000000160014368c6b7c38f0ff0839bf78d77544d\
-//!          a96cb685bf28096980000000000160014284175e336fa10865fb4d1351c9e18e7\
-//!          30f5d6f90247304402207c893c85d75e2230dde04f5a1e2c83c4f0b7d93213372\
-//!          746eb2227b068260d840220705484b6ec70a8fc0d1f80c3a98079602595351b7a\
-//!          9bca7caddb9a6adb0a3440012103150514f05f3e3f40c7b404b16f8a09c2c71ba\
-//!          d3ba8da5dd1e411a7069cc080a004b91300",
-//!     );
-//!     // Take the corresponding key pair.
-//!     let mut rng = thread_rng();
-//!     let keypair = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
-//!     // Create an unsigned transaction
-//!     let mut transaction = Transaction {
-//!         version: 2,
-//!         lock_time: 0,
-//!         input: vec![
-//!             TxIn {
-//!                 previous_output: OutPoint {
-//!                     txid: prev_tx.txid(),
-//!                     vout: 1,
-//!                 },
-//!                 script_sig: Script::default(),
-//!                 sequence: 0xFFFFFFFF,
-//!                 witness: Vec::default(),
+//! // Take a transaction with the unspent P2WPK output.
+//! let prev_tx = btc_tx_from_hex(
+//!     "02000000000101beccab33bc72bfc81b63fdec8a4a9a4719e4418bdb7b20e47b0\
+//!      2074dc42f2d800000000017160014f3b1b3819c1290cd5d675c1319dc7d9d98d5\
+//!      71bcfeffffff02dceffa0200000000160014368c6b7c38f0ff0839bf78d77544d\
+//!      a96cb685bf28096980000000000160014284175e336fa10865fb4d1351c9e18e7\
+//!      30f5d6f90247304402207c893c85d75e2230dde04f5a1e2c83c4f0b7d93213372\
+//!      746eb2227b068260d840220705484b6ec70a8fc0d1f80c3a98079602595351b7a\
+//!      9bca7caddb9a6adb0a3440012103150514f05f3e3f40c7b404b16f8a09c2c71ba\
+//!      d3ba8da5dd1e411a7069cc080a004b91300",
+//! );
+//! // Take the corresponding key pair.
+//! let mut rng = thread_rng();
+//! let keypair = secp_gen_keypair_with_rng(&mut rng, Network::Testnet);
+//! // Create an unsigned transaction
+//! let mut transaction = Transaction {
+//!     version: 2,
+//!     lock_time: 0,
+//!     input: vec![
+//!         TxIn {
+//!             previous_output: OutPoint {
+//!                 txid: prev_tx.txid(),
+//!                 vout: 1,
 //!             },
-//!         ],
-//!         output: vec![
-//!             TxOut {
-//!                 value: 0,
-//!                 script_pubkey: Builder::new()
-//!                     .push_opcode(OP_RETURN)
-//!                     .push_slice(b"Hello Exonum!")
-//!                     .into_script(),
-//!             },
-//!         ],
-//!     };
-//!     // Create a signature for the given input.
-//!     let mut signer = p2wpk::InputSigner::new(keypair.0, Network::Testnet);
-//!     let signature = signer
-//!         .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1.key)
-//!         .unwrap();
-//!     // Finalize the transaction.
-//!     signer.spend_input(&mut transaction.input[0], signature);
-//! }
+//!             script_sig: Script::default(),
+//!             sequence: 0xFFFFFFFF,
+//!             witness: Vec::default(),
+//!         },
+//!     ],
+//!     output: vec![
+//!         TxOut {
+//!             value: 0,
+//!             script_pubkey: Builder::new()
+//!                 .push_opcode(OP_RETURN)
+//!                 .push_slice(b"Hello Exonum!")
+//!                 .into_script(),
+//!         },
+//!     ],
+//! };
+//! // Create a signature for the given input.
+//! let mut signer = p2wpk::InputSigner::new(keypair.0, Network::Testnet);
+//! let signature = signer
+//!     .sign_input(TxInRef::new(&transaction, 0), &prev_tx, &keypair.1.key)
+//!     .unwrap();
+//! // Finalize the transaction.
+//! signer.spend_input(&mut transaction.input[0], signature);
 //! ```
 //!
 //! ## Sign P2WSH input
 //!
 //! ```
-//!
 //! use bitcoin::{
 //!     blockdata::opcodes::all::OP_RETURN,
 //!     blockdata::script::{Builder, Script},
@@ -134,69 +127,66 @@
 //! };
 //! use rand::prelude::*;
 //!
-//! fn main() {
-//!     // Take a transaction with the unspent P2WSH output.
-//!     let prev_tx = btc_tx_from_hex(
-//!         "02000000000101f8c16000cc59f9505046303944d42a6c264a322f80b46bb4361\
-//!          15b6e306ba9950000000000feffffff02f07dc81600000000160014f65eb9d72a\
-//!          8475dd8e26f4fa748796e211aa8869102700000000000022002001fb25c3db04c\
-//!          a5580da43a7d38dd994650d9aa6d6ee075b4578388deed338ed0247304402206b\
-//!          5f211cd7f9b89e80c734b61113c33f437ba153e7ba6bc275eed857e54fcb26022\
-//!          0038562e88b805f0cdfd4873ab3579d52268babe6af9c49086c00343187cdf28a\
-//!          012103979dff5cd9045f4b6fa454d2bc5357586a85d4789123df45f83522963d9\
-//!          4e3217fb91300",
-//!     );
-//!     // Take the corresponding key pairs and the redeem script.
-//!     let total_count = 18;
-//!     let quorum = 12;
-//!
-//!     let mut rng = thread_rng();
-//!     let keypairs = (0..total_count)
-//!         .into_iter()
-//!         .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
-//!         .collect::<Vec<_>>();
-//!     let public_keys = keypairs.iter().map(|keypair| keypair.0);
-//!     let redeem_script = RedeemScriptBuilder::with_public_keys(public_keys)
-//!         .quorum(quorum)
-//!         .to_script()
-//!         .unwrap();
-//!     // Create an unsigned transaction.
-//!     let mut transaction = Transaction {
-//!         version: 2,
-//!         lock_time: 0,
-//!         input: vec![
-//!             TxIn {
-//!                 previous_output: OutPoint {
-//!                     txid: prev_tx.txid(),
-//!                     vout: 1,
-//!                 },
-//!                 script_sig: Script::default(),
-//!                 sequence: 0xFFFFFFFF,
-//!                 witness: Vec::default(),
+//! // Take a transaction with the unspent P2WSH output.
+//! let prev_tx = btc_tx_from_hex(
+//!     "02000000000101f8c16000cc59f9505046303944d42a6c264a322f80b46bb4361\
+//!      15b6e306ba9950000000000feffffff02f07dc81600000000160014f65eb9d72a\
+//!      8475dd8e26f4fa748796e211aa8869102700000000000022002001fb25c3db04c\
+//!      a5580da43a7d38dd994650d9aa6d6ee075b4578388deed338ed0247304402206b\
+//!      5f211cd7f9b89e80c734b61113c33f437ba153e7ba6bc275eed857e54fcb26022\
+//!      0038562e88b805f0cdfd4873ab3579d52268babe6af9c49086c00343187cdf28a\
+//!      012103979dff5cd9045f4b6fa454d2bc5357586a85d4789123df45f83522963d9\
+//!      4e3217fb91300",
+//! );
+//! // Take the corresponding key pairs and the redeem script.
+//! let total_count = 18;
+//! let quorum = 12;
+//! let mut rng = thread_rng();
+//! let keypairs = (0..total_count)
+//!     .into_iter()
+//!     .map(|_| secp_gen_keypair_with_rng(&mut rng, Network::Testnet))
+//!     .collect::<Vec<_>>();
+//! let public_keys = keypairs.iter().map(|keypair| keypair.0);
+//! let redeem_script = RedeemScriptBuilder::with_public_keys(public_keys)
+//!     .quorum(quorum)
+//!     .to_script()
+//!     .unwrap();
+//! // Create an unsigned transaction.
+//! let mut transaction = Transaction {
+//!     version: 2,
+//!     lock_time: 0,
+//!     input: vec![
+//!         TxIn {
+//!             previous_output: OutPoint {
+//!                 txid: prev_tx.txid(),
+//!                 vout: 1,
 //!             },
-//!         ],
-//!         output: vec![
-//!             TxOut {
-//!                 value: 0,
-//!                 script_pubkey: Builder::new()
-//!                     .push_opcode(OP_RETURN)
-//!                     .push_slice(b"Hello Exonum with multisig!")
-//!                     .into_script(),
-//!             },
-//!         ],
-//!     };
-//!     // Create signatures for the given input.
-//!     let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
-//!     let signatures = keypairs[0..quorum]
-//!         .iter()
-//!         .map(|keypair| {
-//!             let txin = TxInRef::new(&transaction, 0);
-//!             signer.sign_input(txin, &prev_tx, &keypair.1.key).unwrap()
-//!         })
-//!         .collect::<Vec<_>>();
-//!     // Finalize the transaction.
-//!     signer.spend_input(&mut transaction.input[0], signatures);
-//! }
+//!             script_sig: Script::default(),
+//!             sequence: 0xFFFFFFFF,
+//!             witness: Vec::default(),
+//!         },
+//!     ],
+//!     output: vec![
+//!         TxOut {
+//!             value: 0,
+//!             script_pubkey: Builder::new()
+//!                 .push_opcode(OP_RETURN)
+//!                 .push_slice(b"Hello Exonum with multisig!")
+//!                 .into_script(),
+//!         },
+//!     ],
+//! };
+//! // Create signatures for the given input.
+//! let mut signer = p2wsh::InputSigner::new(redeem_script.clone());
+//! let signatures = keypairs[0..quorum]
+//!     .iter()
+//!     .map(|keypair| {
+//!         let txin = TxInRef::new(&transaction, 0);
+//!         signer.sign_input(txin, &prev_tx, &keypair.1.key).unwrap()
+//!     })
+//!     .collect::<Vec<_>>();
+//! // Finalize the transaction.
+//! signer.spend_input(&mut transaction.input[0], signatures);
 //! ```
 //!
 //! [redeem-script]: #create-a-redeem-script-and-a-corresponding-multisig-address-3-of-4

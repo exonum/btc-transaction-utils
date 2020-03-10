@@ -23,7 +23,10 @@ use secp256k1::{Secp256k1, SecretKey};
 
 /// Computes a bitcoin private key and a corresponding public key using a
 /// given pseudo-random number generator.
-pub fn secp_gen_keypair_with_rng<R: Rng>(rng: &mut R, network: Network) -> (PublicKey, PrivateKey) {
+pub fn secp_gen_keypair_with_rng<R: Rng + ?Sized>(
+    rng: &mut R,
+    network: Network,
+) -> (PublicKey, PrivateKey) {
     let context = Secp256k1::new();
     let sk = PrivateKey {
         network,
@@ -47,7 +50,7 @@ pub fn secp_gen_keypair(network: Network) -> (PublicKey, PrivateKey) {
 ///
 /// - If the given hex string can't be decoded as a Bitcoin transaction.
 pub fn btc_tx_from_hex(s: &str) -> Transaction {
-    let bytes = bitcoin::util::misc::hex_bytes(s).unwrap();
+    let bytes = hex::decode(s).unwrap();
     consensus::deserialize(&bytes).unwrap()
 }
 
