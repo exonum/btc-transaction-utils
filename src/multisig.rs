@@ -26,9 +26,8 @@ use bitcoin::{
     util::psbt::serialize::Serialize,
     PublicKey,
 };
-use failure;
-use failure_derive::Fail;
 use hex;
+use thiserror::Error;
 
 use std::{fmt, str::FromStr};
 
@@ -57,7 +56,7 @@ impl fmt::Display for RedeemScript {
 }
 
 impl FromStr for RedeemScript {
-    type Err = failure::Error;
+    type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let script = Script::from(hex::decode(s)?);
@@ -254,19 +253,19 @@ impl Default for RedeemScriptBuilder {
 }
 
 /// Possible errors related to the redeem script.
-#[derive(Debug, Copy, Clone, Fail, PartialEq)]
+#[derive(Debug, Copy, Clone, Error, PartialEq)]
 pub enum RedeemScriptError {
     /// Not enough keys for the quorum.
-    #[fail(display = "Not enough keys for the quorum.")]
+    #[error("Not enough keys for the quorum.")]
     IncorrectQuorum,
     /// Quorum was not set during the redeem script building.
-    #[fail(display = "Quorum was not set.")]
+    #[error("Quorum was not set.")]
     NoQuorum,
     /// Not enough public keys. At least one public key must be specified.
-    #[fail(display = "Not enough public keys. At least one public key must be specified.")]
+    #[error("Not enough public keys. At least one public key must be specified.")]
     NotEnoughPublicKeys,
     /// Given script is not the standard redeem script.
-    #[fail(display = "Given script is not the standard redeem script.")]
+    #[error("Given script is not the standard redeem script.")]
     NotStandard,
 }
 
