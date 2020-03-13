@@ -3,8 +3,8 @@ aricent
 atomicity
 backend
 bigint
-Bitbucket
 bitbucket
+Bitbucket
 bitcoind
 bitcoinrpc
 bitfury
@@ -64,8 +64,8 @@ librocksdb
 libsnappy
 libsodium
 libssl
-Mainnet
 mainnet
+Mainnet
 maintainer's
 markdownlint
 memorydb
@@ -100,8 +100,8 @@ PUSHBYTES
 PUSHNUM
 readonly
 reddit
-Regtest
 regtest
+Regtest
 reimplemented
 repo
 repos
@@ -148,6 +148,7 @@ testdata
 testkit
 testnet
 testnetctl
+thiserror
 timestamping
 timestamps
 tlsdate
