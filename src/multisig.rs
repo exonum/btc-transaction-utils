@@ -21,7 +21,7 @@
 use bitcoin::{
     blockdata::{
         opcodes::{all::OP_CHECKMULTISIG, Class},
-        script::{read_uint, Builder, Instruction, Script},
+        script::{read_uint, Builder, Error, Instruction, Script},
     },
     util::psbt::serialize::Serialize,
     PublicKey,
@@ -114,24 +114,26 @@ impl RedeemScriptContent {
     /// Tries to fetch redeem script content from the given raw script and returns error
     /// if the script doesn't satisfy `BIP-16` standard.
     pub fn parse(script: &Script) -> Result<RedeemScriptContent, RedeemScriptError> {
-        fn read_usize(instruction: Instruction) -> Option<usize> {
-            match instruction {
-                Instruction::Op(op) => {
-                    if let Class::PushNum(num) = op.classify() {
-                        Some(num as usize)
-                    } else {
-                        None
+        fn read_usize(instruction: Result<Instruction, Error>) -> Option<usize> {
+            if let Ok(instruction) = instruction {
+                return match instruction {
+                    Instruction::Op(op) => {
+                        if let Class::PushNum(num) = op.classify() {
+                            Some(num as usize)
+                        } else {
+                            None
+                        }
                     }
-                }
-                Instruction::PushBytes(data) => {
-                    let num = read_uint(data, data.len()).ok()?;
-                    Some(num as usize)
-                }
-                _ => None,
+                    Instruction::PushBytes(data) => {
+                        let num = read_uint(data, data.len()).ok()?;
+                        Some(num as usize)
+                    }
+                };
             }
+            None
         };
 
-        let mut instructions = script.iter(true).peekable();
+        let mut instructions = script.instructions_minimal().peekable();
         // Parses quorum.
         let quorum = instructions
             .next()
@@ -140,7 +142,7 @@ impl RedeemScriptContent {
         let public_keys = {
             // Parses public keys.
             let mut public_keys = Vec::new();
-            while let Some(Instruction::PushBytes(slice)) = instructions.peek().cloned() {
+            while let Some(Ok(Instruction::PushBytes(slice))) = instructions.peek().cloned() {
                 // HACK: `public_keys_len` can be pushed as `OP_PUSHNUM` or as `OP_PUSHBYTES`
                 // but its length cannot be greater than 1.
                 if slice.len() == 1 {
@@ -162,7 +164,7 @@ impl RedeemScriptContent {
                 RedeemScriptError::NotEnoughPublicKeys
             );
             ensure!(
-                Some(Instruction::Op(OP_CHECKMULTISIG)) == instructions.next(),
+                Some(Ok(Instruction::Op(OP_CHECKMULTISIG))) == instructions.next(),
                 RedeemScriptError::NotStandard
             );
             public_keys

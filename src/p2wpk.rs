@@ -20,7 +20,11 @@ use bitcoin::{
         transaction::TxIn,
     },
     network::constants::Network,
-    util::{address::Address, key::PublicKey, psbt::serialize::Serialize},
+    util::{
+        address::{self, Address},
+        key::PublicKey,
+        psbt::serialize::Serialize,
+    },
 };
 use secp256k1::{self, All, Secp256k1, SecretKey};
 
@@ -29,7 +33,7 @@ use crate::{
 };
 
 /// Creates a bitcoin address for the corresponding public key and the bitcoin network.
-pub fn address(pk: &PublicKey, network: Network) -> Address {
+pub fn address(pk: &PublicKey, network: Network) -> Result<Address, address::Error> {
     Address::p2wpkh(pk, network)
 }
 
