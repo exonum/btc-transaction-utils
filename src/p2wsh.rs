@@ -120,7 +120,7 @@ impl InputSigner {
         input.witness = self.witness_data(signatures.into_iter().map(Into::into));
     }
 
-    fn witness_data<I: IntoIterator<Item = Vec<u8>>>(&self, signatures: I) -> Vec<Vec<u8>> {
+    pub fn witness_data<I: IntoIterator<Item = Vec<u8>>>(&self, signatures: I) -> Vec<Vec<u8>> {
         let mut witness_stack = vec![Vec::default()];
         witness_stack.extend(signatures);
         witness_stack.push(self.script.0[..].to_vec());

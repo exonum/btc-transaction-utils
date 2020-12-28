@@ -131,7 +131,7 @@ impl InputSigner {
         input.witness = self.witness_data(signature.into());
     }
 
-    fn witness_data(&self, signature: Vec<u8>) -> Vec<Vec<u8>> {
+    pub fn witness_data(&self, signature: Vec<u8>) -> Vec<Vec<u8>> {
         vec![signature, self.public_key.serialize().to_vec()]
     }
 
